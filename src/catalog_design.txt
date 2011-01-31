@@ -1,0 +1,27 @@
+4	id (HR)
+10	name
+
+61
+
+2	hour	Ra
+2	min
+4	sec
+
+1	sign	Dec
+2	deg
+2	amin
+2	asec
+
+12
+
+5	visual magnitude
+
+2
+
+5	B-V
+1
+5	U-B
+1
+5	R-I
+
+...unused
