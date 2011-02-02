@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Sky Canvas on HTML5</title>
+		<meta name="author" content="neizod">
+		<meta name="Designer" content="neizod">
+		<style>
+			body {
+				width:  100%;
+				height: 100%;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+		<script language="javascript" src="sky.js"></script>
+		<script language="javascript" src="controller.js"></script>
+		<script language="javascript" src="ezgl.js"></script>
+		<script language="javascript" src="stars.js"></script>
+		<script language="javascript" src="lines.js"></script>
+	</head>
+
+	<body onload="init();" onresize="tool.resizeHandler()" onkeypress="keyAction(event);">
+
+		<center>
+			<canvas id="sky" width="1200" height="650" style="background-color:gray" onmousemove="mouse.absolutePosition(event);" onmouseout="mouse.out();" onmousedown="mouse.drag();" onmouseup="mouse.release();" onclick="mouse.click();" ondblclick="mouse.dblclick();">
+				Sorry, your browser doesn't support HTML5.
+			</canvas>
+		</center>
+	</body>
+</html>
