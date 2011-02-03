@@ -7,6 +7,7 @@ var starSet, skylineSet, obslineSet, compassSet, labelSet;
 var stopMoving = false;
 var moveIndex;
 var drawingObject;
+var liningObject;
 
 function Tool() {
 	this.secO = this.secN = 60;
@@ -95,8 +96,8 @@ function Sky(rotation) {
 		}
 		this.ref = ezGL.rotateZ(this.xyz, 90); // create ref point at 90 degree ahead
 
-		this.xyz = ezGL.rotateY(this.xyz, -180); // flip real-world-coordinate to computer-coordinate.
-		this.ref = ezGL.rotateY(this.ref, -180); // flip real-world-coordinate to computer-coordinate.
+		this.xyz = ezGL.switchCoordinateSystem(this.xyz);
+		this.ref = ezGL.switchCoordinateSystem(this.ref);
 
 		this.rDec = Math.asin(this.xyz[2]);
 		this.rRA =  Math.asin(this.xyz[0] / Math.cos(this.rDec));
@@ -166,7 +167,6 @@ function Star(name, ra, dec, mag) {
 	this.ra = ra;
 	this.dec = dec;
 	this.mag = mag;
-	this.xy = [];
 
 	this.visible = true;
 	this.nameable = false;
@@ -186,12 +186,26 @@ function Star(name, ra, dec, mag) {
 		this.radius = (6 - this.mag > 1) ? 6 - this.mag : 1;
 		return this.radius;
 	}
+
+	this.plotSky = function(skyRotation) {
+		if(!this.visible) return;
+		if(!this.plotPosition(skyRotation)) return;
+		var xy = this.plotPosition(skyRotation)
+		if(!this.checkOnScreen(xy)) return;
+		this.checkMouseOver(xy)
+		if(this.mag != -10) {
+			this.plotStar(xy);
+		} else {
+			ctx.fillText(this.name, xy[0], xy[1]);
+		}
+		drawingObject++;
+	}
 	this.plotPosition = function(skyRotation) {
 		// =========== init sky section ============
 		xyz = this.cartesian;
-		xyz = ezGL.toRealWorldCoordinate(xyz);
+		xyz = ezGL.switchCoordinateSystem(xyz);
 		if(skyRotation) {
-			xyz = ezGL.rotateZ(xyz, moveIndex); // rotate sky by celestial-pole-axis. -- use 20 to see orion
+			xyz = ezGL.rotateZ(xyz, -20)//moveIndex); // rotate sky by celestial-pole-axis. -- use -20 to see orion
 			xyz = ezGL.rotateX(xyz, console.latitude);
 		} else {
 			xyz = ezGL.rotateX(xyz, 90);
@@ -206,31 +220,19 @@ function Star(name, ra, dec, mag) {
 		xyz = ezGL.rotateX(xyz, console.altitude);
 		if(xyz[1] < 0) return false;
 
-		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
-		this.xy = [xyz[0], xyz[2]];
-		return true;
+		var xy = [xyz[0], xyz[2]];
+//		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
+		return xy;
 	}
-	this.plot = function(skyRotation) {
-		if(!this.visible) return;
-		if(!this.plotPosition(skyRotation)) return;
-		this.checkMouseOver()
-		if(this.mag != -10) {
-			this.plotStar();
-		} else {
-			ctx.fillText(this.name, this.xy[0], this.xy[1]);
-		}
-
-		drawingObject++;
-	}
-	this.plotName = function() {
+	this.plotName = function(xy) {
 		if(this.nameable) {
-			ctx.fillText(this.name, this.xy[0] + 2, this.xy[1] - 6);
+			ctx.fillText(this.name, xy[0] + 2, xy[1] - 6);
 //			ctx.fillText(this.shape, this.xy[0] -5, this.xy[1] - 6); // get star info here
 		}
 	}
-	this.plotStar = function() {
+	this.plotStar = function(xy) {
 		ctx.save();
-		ctx.translate(this.xy[0], this.xy[1]);
+		ctx.translate(xy[0], xy[1]);
 		ctx.scale(this.getRadius(),this.getRadius());
 		ctx.fillStyle = this.coulor;
 		switch(this.shape) {
@@ -251,25 +253,25 @@ function Star(name, ra, dec, mag) {
 		ctx.restore();
 	}
 
-	this.checkMouseOver = function() {
+	this.checkMouseOver = function(xy) {
 		if(!this.selectable) return;
-		overSize = 2.5;
-		mouseX = mouse.oxy[0] - this.xy[0];
-		mouseY = mouse.oxy[1] - this.xy[1];
+		overSize = 2;// 2.5
+		mouseX = mouse.oxy[0] - xy[0];
+		mouseY = mouse.oxy[1] - xy[1];
 
 		if(Math.sqrt(Math.pow(mouseX, 2) + Math.pow(mouseY, 2)) < overSize*this.getRadius()) {
 			this.mouseOn = true;
 			this.coulor = "yellow";
-			this.plotName();
+			this.plotName(xy);
 		} else {
 			this.mouseOn = false;
-			this.coulor = "red";
+			this.coulor = "darkblue";
 		}
 	}
-	this.checkOnScreen = function(x, y) {
+	this.checkOnScreen = function(xy) {
 		overSize = 1.025;
-		if(x > overSize*windowSize.halfWidth || x < -overSize*windowSize.halfWidth ||
-		   y > overSize*windowSize.halfHeight || y < -overSize*windowSize.halfHeight)
+		if(xy[0] > overSize*windowSize.halfWidth || xy[0] < -overSize*windowSize.halfWidth ||
+		   xy[1] > overSize*windowSize.halfHeight || xy[1] < -overSize*windowSize.halfHeight)
 			return false;
 		return true;
 	}
@@ -377,8 +379,9 @@ function Console() {
 		this.lockUnderFeet = !this.lockUnderFeet;
 	}
 }
-function PlotSet(plotSet, rotation) {
+function PlotSet(plotSet, lineSet, rotation) {
 	this.plotSet = plotSet;
+	this.lineSet = lineSet;
 	this.visible = true;
 	this.nameable = true;
 	this.rotation = rotation;
@@ -387,12 +390,43 @@ function PlotSet(plotSet, rotation) {
 		if(!this.visible) return;
 		for(i = 0; i < this.plotSet.length; i++) {
 			if(this.plotSet[i] == null) continue;
-			this.plotSet[i].plot(this.rotation);
-
+			this.plotSet[i].plotSky(this.rotation);
 			if(this.nameable)
 				this.plotSet[i].plotName();
-
-
+		}
+	}
+	this.plotLine = function() {
+		for(var c = 0; c < this.lineSet.length; c++) {
+			for(var i = 0; i < this.lineSet[c].length; i++) {
+				if(!this.lineSet[c][i]) continue;
+				this.lineSet[c][i].setConnection();
+			}
+		}
+		for(var c = 0; c < this.lineSet.length; c++) {
+			for(var i = 0; i < this.lineSet[c].length; i++) {
+				if(!this.lineSet[c][i]) continue;
+				if(!this.plotSet[this.lineSet[c][i].id].plotPosition(this.rotation)) continue;
+				var myxy = this.plotSet[this.lineSet[c][i].id].plotPosition(this.rotation);
+				if(!this.plotSet[this.lineSet[c][i].id].checkOnScreen(myxy)) continue;
+//			alert()
+				for(var j = 0; j < this.lineSet[c][i].nbh.length; j++) {
+					if(this.lineSet[c][i].connected[j]) continue;
+					var ij = this.lineSet[c][i].nbh[j];
+					if(!this.lineSet[c][ij]) continue;
+					if(!this.plotSet[this.lineSet[c][ij].id].plotPosition(this.rotation)) continue;
+					var desxy = this.plotSet[this.lineSet[c][ij].id].plotPosition(this.rotation);
+					ctx.beginPath();
+					ctx.moveTo(myxy[0], myxy[1]);
+					ctx.lineTo(desxy[0], desxy[1]);
+					ctx.closePath();
+					ctx.stroke();
+					liningObject++;
+					this.lineSet[c][i].connected[j] = true;
+					for(var k = 0; k < this.lineSet[c][ij].nbh.length; k++) {
+						if(this.lineSet[c][ij].nbh[k] == i) this.lineSet[c][ij].connected[k] = true;
+					}
+				}
+			}
 		}
 	}
 
@@ -422,49 +456,39 @@ function PlotSet(plotSet, rotation) {
 		}
 	}
 }
-function LineSet(lineSet, rotation) { // ???
-	this.lineSet = lineSet;
-	this.visible = true;
-	this.nameable = true;
-	this.rotation = rotation;
 
-	this.plotLine = function() {
-		if(!this.visible) return;
-		for(i = 0; i < this.plotLine.length; i++) {
-			if(this.plotLine[i] == null) continue;
-			if(!this.plotLine[i].visible) continue; // show only selected magnitute
+function Line(id, nbh) {
+	this.id = id;
+	this.nbh = nbh;
+	this.connected = [];
 
-			// =========== init sky section ============
-			xyz = this.plotLine[i].cartesian;
-			xyz = ezGL.toRealWorldCoordinate(xyz);
-			if(this.rotation) {
-				xyz = ezGL.rotateZ(xyz, moveIndex); // rotate sky by celestial-pole-axis. -- use 20 to see orion
-				xyz = ezGL.rotateX(xyz, console.latitude);
-			} else {
-				xyz = ezGL.rotateX(xyz, 90);
-			}
-			if(console.lockUnderFeet) {
-				if(xyz[1] + 0.1 < 0) continue; // draw star above earth surface only.
-			}
+	this.getPosition = function(skyRotation) {
+		// =========== init sky section ============
+		var xyz = this.cartesian;
+		xyz = ezGL.switchCoordinateSystem(xyz);
+		if(skyRotation) {
+			xyz = ezGL.rotateZ(xyz, -20)//moveIndex); // rotate sky by celestial-pole-axis. -- use 20 to see orion
+			xyz = ezGL.rotateX(xyz, console.latitude);
+		} else {
+			xyz = ezGL.rotateX(xyz, 90);
+		}
+//		if(console.lockUnderFeet) {
+//			if(xyz[1] + 0.1 < 0) return false; // draw star above earth surface only.
+//		}
 
-			// =========== show sky section ============
-			xyz = ezGL.scale(xyz, console.scale);
-			xyz = ezGL.rotateY(xyz, console.azimuth);
-			xyz = ezGL.rotateX(xyz, console.altitude);
-			if(xyz[1] < 0) continue;
+		// =========== show sky section ============
+		xyz = ezGL.scale(xyz, console.scale);
+		xyz = ezGL.rotateY(xyz, console.azimuth);
+		xyz = ezGL.rotateX(xyz, console.altitude);
+//		if(xyz[1] < 0) return false;
 
-			if(!this.checkOnScreen(xyz[0], xyz[2])) continue; // draw on screen only
-
-			if(plotLine[i].mag != -10) {
-				ctx.beginPath();
-				ctx.arc(xyz[0], xyz[2], plotLine[i].getRadius(), 0, 2*Math.PI);
-				ctx.fill();
-			} else {
-				ctx.fillText(this.plotLine[i].name, xyz[0], xyz[2]);
-			}
-			if(this.nameable && plotLine[i].nameable) ctx.fillText(this.plotLine[i].name, xyz[0]+3, xyz[2]+7);
-
-			drawingObject++;
+//		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
+		this.xy = [xyz[0], xyz[2]];
+		return this.xy;
+	}
+	this.setConnection = function() {
+		for(var i = 0; i < this.nbh.length; i++) {
+			this.connected[i] = false;
 		}
 	}
 }
@@ -483,7 +507,7 @@ function Ground() {
 
 		if(!this.fullMap || !console.fullMap)
 			this.clipUnderground();
-		else {
+		if(this.fullMap) {
 			ctx.beginPath();
 			ctx.arc(0, 0, console.scale, 0, 2*Math.PI);
 			ctx.clip();
@@ -492,7 +516,7 @@ function Ground() {
 	}
 	this.clipUnderground = function() {
 		xyz = [1, 0, 0]; // E
-		xyz = ezGL.rotateY(xyz, 180);
+		xyz = ezGL.switchCoordinateSystem(xyz);
 		xyz = ezGL.rotateX(xyz, 90);
 		xyz = ezGL.scale(xyz, console.scale);
 		xyz = ezGL.rotateY(xyz, 90);
@@ -538,23 +562,23 @@ function initPlot() {
 	ezGL = new EzGL();
 
 	initStar();
-	starSet = new PlotSet(star, true);
+	initConstal();
+	initOthersPlot();
 
+	starSet = new PlotSet(star, constal, true);
 	sky = new Sky(true);
 	observer = new Sky(false);
 	ground = new Ground();
 
-	initOthersPlot();
-	skylineSet = new PlotSet(skyline, true);
-	obslineSet = new PlotSet(obsline, false);
-	compassSet = new PlotSet(compass, false);
+	skylineSet = new PlotSet(skyline, line, true);
+	obslineSet = new PlotSet(obsline, line, false);
+	compassSet = new PlotSet(compass, line, false);
 //	labelSet = new PlotSet(label, true);
-
-	starSet.checkEachVisible(5);
-	starSet.checkEachNameable(3);
+	starSet.checkEachVisible(6);
+	starSet.checkEachNameable(7);
 	starSet.nameable = false;
 
-	obslineSet.visible = false;
+//	obslineSet.visible = false;
 }
 
 function drawSky() {
@@ -579,12 +603,16 @@ function drawSky() {
 	ground.plotGround();
 
 	drawingObject = 0;
+	liningObject = 0;
+
+	starSet.plotLine();
 	starSet.plotSky();
 
-	skylineSet.plotSky();
-	obslineSet.plotSky();
+//	skylineSet.plotSky();
+//	obslineSet.plotSky();
 //	labelSet.plotSky();
-	compassSet.plotSky();
+//	compassSet.plotSky();
+
 
 	ctx.restore(); // unclip
 
@@ -621,12 +649,13 @@ function drawSky() {
 //	ctx.fillText(keyboard.panning, 400, -35);
 
 	ctx.fillText("object draw = " + drawingObject, -575, -280);
+	ctx.fillText("object lined = " + liningObject, -575, -265);
 	ctx.fillText("draw complete!", -575, -300); // use this to check if canvas has no problems
 	ctx.restore();
 }
 
 function init() {
-//	alert(Math.E) // test somthing here!! (only 1 time alert)
+//	alert(!!a[0]) // test somthing here!! (only 1 time alert)
 	var canvas = document.getElementById("sky");
 	if(canvas.getContext) {
 		ctx = canvas.getContext("2d");

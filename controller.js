@@ -193,7 +193,7 @@ function MouseControl() {
 	}
 	this.getZenith = function() {
 		xyz = compassSet.plotSet[8].cartesian;
-		xyz = ezGL.toRealWorldCoordinate(xyz);
+		xyz = ezGL.switchCoordinateSystem(xyz);
 		xyz = ezGL.rotateX(xyz, 90);
 
 		xyz = ezGL.scale(xyz, console.scale);

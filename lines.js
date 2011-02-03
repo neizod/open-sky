@@ -3,6 +3,11 @@ var obsline = [];
 var compass = [];
 var label = [];
 
+var line = [];
+for(i = 0; i < 88; i++) {
+	line[i] = [];
+}
+
 function initOthersPlot() {
 // ==================== Draw Poor Sky Line ========================
 	for(j = 0; j <= 47 ;j++) {
@@ -44,4 +49,12 @@ function initOthersPlot() {
 	label[12] = new Star("Urodelus", 16.766155555555557, 82.03725, -10);
 	label[13] = new Star("Alifa al Farkadain", 15.734294444444444, 77.7945, -10);
 	label[14] = new Star("Anwar al Farkadain", 16.291805555555555, 75.75469444444444, -10);
+// ================ test line ========================
+	line[0][0] = new Line(1852, [1,2,3]);
+	line[0][1] = new Line(1713, [0]);
+	line[0][2] = new Line(2061, [0]);
+//	line[0][3] = new Line(1790, [0]);
+	line[0][4] = new Line(2004, [5]);
+	line[0][5] = new Line(1903, [4, 8]);
+	line[0][8] = new Line(1948, [5]);
 }
