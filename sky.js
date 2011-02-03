@@ -186,9 +186,7 @@ function Star(name, ra, dec, mag) {
 		this.radius = (6 - this.mag > 1) ? 6 - this.mag : 1;
 		return this.radius;
 	}
-	this.getPlotPosition = function(skyRotation) {
-		if(!this.visible) return;
-
+	this.plotPosition = function(skyRotation) {
 		// =========== init sky section ============
 		xyz = this.cartesian;
 		xyz = ezGL.toRealWorldCoordinate(xyz);
@@ -199,18 +197,22 @@ function Star(name, ra, dec, mag) {
 			xyz = ezGL.rotateX(xyz, 90);
 		}
 		if(console.lockUnderFeet) {
-			if(xyz[1] + 0.1 < 0) return; // draw star above earth surface only.
+			if(xyz[1] + 0.1 < 0) return false; // draw star above earth surface only.
 		}
 
 		// =========== show sky section ============
 		xyz = ezGL.scale(xyz, console.scale);
 		xyz = ezGL.rotateY(xyz, console.azimuth);
 		xyz = ezGL.rotateX(xyz, console.altitude);
-		if(xyz[1] < 0) return;
+		if(xyz[1] < 0) return false;
 
-		if(!this.checkOnScreen(xyz[0], xyz[2])) return; // draw on screen only
+		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
 		this.xy = [xyz[0], xyz[2]];
-
+		return true;
+	}
+	this.plot = function(skyRotation) {
+		if(!this.visible) return;
+		if(!this.plotPosition(skyRotation)) return;
 		this.checkMouseOver()
 		if(this.mag != -10) {
 			this.plotStar();
@@ -385,7 +387,7 @@ function PlotSet(plotSet, rotation) {
 		if(!this.visible) return;
 		for(i = 0; i < this.plotSet.length; i++) {
 			if(this.plotSet[i] == null) continue;
-			this.plotSet[i].getPlotPosition(this.rotation);
+			this.plotSet[i].plot(this.rotation);
 
 			if(this.nameable)
 				this.plotSet[i].plotName();
@@ -481,7 +483,7 @@ function Ground() {
 
 		if(!this.fullMap || !console.fullMap)
 			this.clipUnderground();
-		if(this.fullMap) {
+		else {
 			ctx.beginPath();
 			ctx.arc(0, 0, console.scale, 0, 2*Math.PI);
 			ctx.clip();
@@ -489,14 +491,14 @@ function Ground() {
 		ctx.clearRect(-windowSize.halfWidth, -windowSize.halfHeight, windowSize.width, windowSize.height);
 	}
 	this.clipUnderground = function() {
-		this.xyz = [1, 0, 0]; // E
-		this.xyz = ezGL.rotateY(this.xyz, 180);
-		this.xyz = ezGL.rotateX(this.xyz, 90);
-		this.xyz = ezGL.scale(this.xyz, console.scale);
-		this.xyz = ezGL.rotateY(this.xyz, 90);
-		this.xyz = ezGL.rotateX(this.xyz, console.altitude);
+		xyz = [1, 0, 0]; // E
+		xyz = ezGL.rotateY(xyz, 180);
+		xyz = ezGL.rotateX(xyz, 90);
+		xyz = ezGL.scale(xyz, console.scale);
+		xyz = ezGL.rotateY(xyz, 90);
+		xyz = ezGL.rotateX(xyz, console.altitude);
 		a = console.scale;
-		b = this.xyz[2];
+		b = xyz[2];
 
 		plotGroundSet = [];
 		for(i = 0; i <= 40; i++) {
@@ -535,13 +537,14 @@ function initConsole() {
 function initPlot() {
 	ezGL = new EzGL();
 
-	initStar();	
-	initOthersPlot();
+	initStar();
+	starSet = new PlotSet(star, true);
 
 	sky = new Sky(true);
 	observer = new Sky(false);
 	ground = new Ground();
-	starSet = new PlotSet(star, true);
+
+	initOthersPlot();
 	skylineSet = new PlotSet(skyline, true);
 	obslineSet = new PlotSet(obsline, false);
 	compassSet = new PlotSet(compass, false);
@@ -577,6 +580,7 @@ function drawSky() {
 
 	drawingObject = 0;
 	starSet.plotSky();
+
 	skylineSet.plotSky();
 	obslineSet.plotSky();
 //	labelSet.plotSky();
@@ -585,6 +589,14 @@ function drawSky() {
 	ctx.restore(); // unclip
 
 	if(true) {// ================ hud ========================
+
+// Math.cos(\\\mouse\\\*Math.PI/windowSize.getRadius())
+
+		ctx.beginPath();
+		ctx.arc(0, 0, windowSize.getRadius()/2, 0, 2*Math.PI)
+		ctx.stroke();
+		ctx.closePath();
+
 		ctx.fillText("mouse = " + sky.stringPosition(mouse.oxy), -500, 20);
 		ctx.fillText("origin = " + sky.stringPosition([0, 0]), -500, 40);
 
@@ -592,20 +604,21 @@ function drawSky() {
 		ctx.fillText("origin = " + observer.stringPosition([0, 0]), -500, 90);
 
 			ctx.fillText(mouse.oxy, -500, -50);
-			ctx.fillText(mouse.cxy, -500, -35);
-			ctx.fillText(mouse.gotAltz, -500, -20);
+//			ctx.fillText(mouse.obsAltz, -500, -35);
+			ctx.fillText(mouse.releaseSpeedFunction*1000, -500, -20);
 			ctx.fillText(mouse.gotSpeed, -400, -50);
-			ctx.fillText(mouse.dxyN, -400, -35);
-			ctx.fillText(mouse.dragSpeed, -400, -20);
+			ctx.fillText(mouse.nowSpeed, -400, -35);
+			ctx.fillText(mouse.releaseSpeed, -400, -20);
 			
-//			ctx.fillText(mouse.deriviate, 400, -20);
-//			ctx.fillText(mouse.dblGoto, 400, -5);
+			ctx.fillText(mouse.unclick, 500, -35);
+			ctx.fillText(mouse.leftDown, 500, -20);
+			ctx.fillText(mouse.dblGoto, 500, -5);
 	}
 	// ======================= dev zone =======================
-	ctx.fillText(console.scale, 0, 0); // use this to check where to debug
+//	ctx.fillText(console.scale, 0, 0); // use this to check where to debug
 	ctx.fillText(tool.fps(), 525, -300);
-	ctx.fillText(keyboard.arrowDown, 400, -50);
-	ctx.fillText(keyboard.panning, 400, -35);
+//	ctx.fillText(keyboard.arrowDown, 400, -50);
+//	ctx.fillText(keyboard.panning, 400, -35);
 
 	ctx.fillText("object draw = " + drawingObject, -575, -280);
 	ctx.fillText("draw complete!", -575, -300); // use this to check if canvas has no problems

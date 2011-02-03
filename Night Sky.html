@@ -16,13 +16,23 @@
 		<script language="javascript" src="controller.js"></script>
 		<script language="javascript" src="ezgl.js"></script>
 		<script language="javascript" src="stars.js"></script>
+		<script language="javascript" src="constal.js"></script>
 		<script language="javascript" src="lines.js"></script>
 	</head>
 
 	<body onload="init();" onresize="tool.resizeHandler()" onkeypress="keyAction(event);">
 
 		<center>
-			<canvas id="sky" width="1200" height="650" style="background-color:gray" onmousemove="mouse.absolutePosition(event);" onmouseout="mouse.out();" onmousedown="mouse.drag();" onmouseup="mouse.release();" onclick="mouse.click();" ondblclick="mouse.dblclick();">
+			<canvas
+				id="sky" width="1200" height="650"
+				style="background-color:gray"
+				onmousemove="mouse.absolutePosition(event);"
+				onmouseout="mouse.out();"
+				onmousedown="mouse.drag();"
+				onmouseup="mouse.release();"
+				onclick="mouse.click();"
+				ondblclick="mouse.dblclick();"
+			>
 				Sorry, your browser doesn't support HTML5.
 			</canvas>
 		</center>

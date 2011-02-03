@@ -94,8 +94,8 @@ function MouseControl() {
 	this.cxy = [];
 	this.dxyO = [];
 	this.dxyN = [];
-	this.obsAltz = [];
-	this.gotAltz = [];
+	this.obsAltz = [0, 0];
+	this.gotAltz = [0, 0];
 	this.speedSet = [0, 0, 0, 0, 0];
 	this.releaseSpeed = 0;
 	this.nowSpeed = 0;
@@ -107,25 +107,21 @@ function MouseControl() {
 		this.originPosition(this.xy);
 	}
 	this.originPosition = function(xy) {
-		this.oxy[0] = xy[0] - windowSize.halfWidth;
-		this.oxy[1] = xy[1] - windowSize.halfHeight;
+		this.oxy = [xy[0] - windowSize.halfWidth, xy[1] - windowSize.halfHeight];
 	}
 	this.clickingPosition = function() {
-		this.cxy[0] = this.oxy[0];
-		this.cxy[1] = this.oxy[1];
+		this.cxy = [this.oxy[0], this.oxy[1]];
 	}
 	this.dragingPosition = function() {
-		this.dxyO[0] = this.dxyN[0];
-		this.dxyO[1] = this.dxyN[1];
-		this.dxyN[0] = this.oxy[0];
-		this.dxyN[1] = this.oxy[1];
+		this.dxyO = [this.dxyN[0], this.dxyN[1]];
+		this.dxyN = [this.oxy[0], this.oxy[1]];
 	}
 
 	this.click = function() {
 		if(console.forceZoom) return;
-		this.dblGoto = false;
+		if(this.dblGoto) this.dblGoto = false;
 	}
-	this.right = function(e) { // !!!!!!!!!!!!!!! broke !!!!!!!!!!!!!!
+	this.right = function(e) { // !!!!!!!!!!!!!!! broke !!!!!!!!!!!!!!	
 		if(e.button == 2) e.stopPropagation();
 	}
 	this.dblclick = function() {
@@ -154,30 +150,32 @@ function MouseControl() {
 		this.dragingPosition();
 		this.leftDown = true;
 		if(this.leftDown && !this.unclick) {
-			this.dragVector = [this.dxyN[0] - this.dxyO[0], this.dxyN[1] - this.dxyO[1]];
-			this.dragSpeed = Math.sqrt(Math.pow(this.dragVector[0], 2) + Math.pow(this.dragVector[1], 2));
-			this.speedHandler(this.dragSpeed);
+			dragVector = [this.dxyN[0] - this.dxyO[0], this.dxyN[1] - this.dxyO[1]];
+			dragSpeed = Math.sqrt(Math.pow(dragVector[0], 2) + Math.pow(dragVector[1], 2));
+			this.speedHandler(dragSpeed);
 
-			this.obsAtzO = observer.position(this.dxyO);
-			this.obsAtzN = observer.position(this.dxyN);
+			obsAtzO = observer.position(this.dxyO);
+			obsAtzN = observer.position(this.dxyN);
 
-			this.obsAltz = [this.obsAtzN[0] - this.obsAtzO[0], this.obsAtzN[1] - this.obsAtzO[1]];
+			this.obsAltz = [obsAtzN[0] - obsAtzO[0], obsAtzN[1] - obsAtzO[1]];
 			if(this.obsAltz[0] > 180) this.obsAltz[0] -= 360;
 			else if(this.obsAltz[0] < -180) this.obsAltz[0] += 360;
-			this.zenith = this.getZenith();
 
-			if(this.dxyO[1] >= this.zenith) this.obsAltz[1] = -this.obsAltz[1];
+			if(this.dxyO[1] >= this.getZenith()) this.obsAltz[1] = -this.obsAltz[1];
 			console.addAzimuth(this.obsAltz[0]);
 			console.addAltitude(this.obsAltz[1]);
+		} else {
+			this.obsAltz = [0, 0];
 		}
 		this.unclick = false;
 	}
 	this.release = function() {
-		if(!this.control || !this.leftDown || console.forceZoom) return;
+		if(console.forceZoom) return;
+		if(!this.control || !this.leftDown) return;
 		this.leftDown = false;
 		this.unclick = true;
-		this.dxyN = [];
 		this.dxyO = [];
+		this.dxyN = [];
 		this.speedSet = [0, 0, 0, 0, 0];
 		this.releaseSpeed = Math.floor(this.releaseSpeed) + 1;
 		this.nowSpeed = this.releaseSpeed;
@@ -187,22 +185,21 @@ function MouseControl() {
 		if(this.leftDown) this.release();
 	}
 
-	this.checkCenterScreen = function(size) { // !!!!!!!!!!!! indicate by circle !!!!!!!!!!!
-		this.centerArea = size
-		if(this.oxy[0] < this.centerArea && this.oxy[0] > -this.centerArea &&
-		   this.oxy[1] < this.centerArea && this.oxy[1] > -this.centerArea)
-			return true;
-		return false;
+	this.farRadius = function() {
+		toMouse = Math.sqrt(Math.pow(this.oxy[0], 2) + Math.pow(this.oxy[1], 2));
+		if(toMouse > windowSize.getRadius()/2);
+		farFactor = Math.pow(Math.cos(toMouse*Math.PI/windowSize.getRadius()), 2);
+		return farFactor;
 	}
 	this.getZenith = function() {
-		this.xyzZ = compassSet.plotSet[8].cartesian;
-		this.xyzZ = ezGL.toRealWorldCoordinate(this.xyzZ);
-		this.xyzZ = ezGL.rotateX(this.xyzZ, 90);
+		xyz = compassSet.plotSet[8].cartesian;
+		xyz = ezGL.toRealWorldCoordinate(xyz);
+		xyz = ezGL.rotateX(xyz, 90);
 
-		this.xyzZ = ezGL.scale(this.xyzZ, console.scale);
-		this.xyzZ = ezGL.rotateY(this.xyzZ, console.azimuth);
-		this.xyzZ = ezGL.rotateX(this.xyzZ, console.altitude);
-		return this.xyzZ[2];
+		xyz = ezGL.scale(xyz, console.scale);
+		xyz = ezGL.rotateY(xyz, console.azimuth);
+		xyz = ezGL.rotateX(xyz, console.altitude);
+		return xyz[2];
 	}
 	this.speedHandler = function(dragSpeed) {
 		for(i = 4; i > 0; i--) {
@@ -215,31 +212,32 @@ function MouseControl() {
 		}
 	}
 	this.releaseHandler = function() {
-		this.releaseSpeedFunction = Math.pow(Math.E, -(this.releaseSpeed - this.nowSpeed)/2);
+		releaseSpeedFunction = Math.pow(Math.E, -(this.releaseSpeed - this.nowSpeed)/2);
 		if(this.nowSpeed > 0) {
-			console.addAzimuth(this.releaseSpeedFunction*this.obsAltz[0]);
-			console.addAltitude(this.releaseSpeedFunction*this.obsAltz[1]);
+			console.addAzimuth(releaseSpeedFunction*this.obsAltz[0]);
+			console.addAltitude(releaseSpeedFunction*this.obsAltz[1]);
 			this.nowSpeed--;
-		}
+		} else this.obsAltz = [0, 0];
 	}
 	this.gotoHandler = function() {
 		if(this.gotSpeed == this.allSpeed) {
 			if(console.fullMap) {
-				this.zoomSpeed = windowSize.getRadius() - console.scale;
+				zoomSpeed = windowSize.getRadius() - console.scale;
 				console.changeFullMap();
 				ground.changeFullMap();
 				console.forceZoom = true;
-			} else if(this.checkCenterScreen(40)) this.zoomSpeed = 2*console.scale/3;
-			else this.zoomSpeed = 0;
+			} else if(this.farRadius() > 0) {
+				zoomSpeed = this.farRadius()*console.scale;
+			} else zoomSpeed = 0;
 		}
 
-		this.gotoSpeedFunction = Math.pow(Math.sin(this.gotSpeed*Math.PI/this.allSpeed), 2)*this.deriviate;
+		gotoSpeedFunction = Math.pow(Math.sin(this.gotSpeed*Math.PI/this.allSpeed), 2)*this.deriviate;
 		if(this.gotSpeed > 0) {
 			if(console.scale < windowSize.getRadius()) {
-				console.forceAddScale(this.gotoSpeedFunction*this.zoomSpeed);
-			} else console.addScale(this.gotoSpeedFunction*this.zoomSpeed);
-			console.addAzimuth(this.gotoSpeedFunction*this.gotAltz[0]);
-			console.addAltitude(this.gotoSpeedFunction*this.gotAltz[1]);
+				console.forceAddScale(gotoSpeedFunction*zoomSpeed);
+			} else console.addScale(gotoSpeedFunction*zoomSpeed);
+			console.addAzimuth(gotoSpeedFunction*this.gotAltz[0]);
+			console.addAltitude(gotoSpeedFunction*this.gotAltz[1]);
 			this.gotSpeed--;
 		} else {
 			this.dblGoto = false;
