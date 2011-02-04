@@ -115,7 +115,7 @@ function Sky(rotation) {
 		} else {
 			if(this.radec[0] < 0) this.radec[0] = 24 + this.radec[0];
 		}
-		if(isNaN(this.radec[0])) this.radec[0] = 0;
+		if(isNaN(this.radec[0])) this.radec[0] = 180;
 		if(!this.rotation) {
 			this.radec[0] = (36 - this.radec[0])%24;
 			this.radec[0] *= 15;
@@ -205,13 +205,13 @@ function Star(name, ra, dec, mag) {
 		xyz = this.cartesian;
 		xyz = ezGL.switchCoordinateSystem(xyz);
 		if(skyRotation) {
-			xyz = ezGL.rotateZ(xyz, -20)//moveIndex); // rotate sky by celestial-pole-axis. -- use -20 to see orion
+			xyz = ezGL.rotateZ(xyz, moveIndex); // rotate sky by celestial-pole-axis. -- use -20 to see orion
 			xyz = ezGL.rotateX(xyz, console.latitude);
 		} else {
 			xyz = ezGL.rotateX(xyz, 90);
 		}
 		if(console.lockUnderFeet) {
-			if(xyz[1] + 0.1 < 0) return false; // draw star above earth surface only.
+			if(xyz[1] + 0.25 < 0) return false; // draw star above earth surface only.
 		}
 
 		// =========== show sky section ============
@@ -263,6 +263,7 @@ function Star(name, ra, dec, mag) {
 			this.mouseOn = true;
 			this.coulor = "yellow";
 			this.plotName(xy);
+			ctx.fillText(this.mag, xy[0] - 34, xy[1] + 5) // for constal line's propose only!
 		} else {
 			this.mouseOn = false;
 			this.coulor = "darkblue";
@@ -298,7 +299,6 @@ function Console() {
 	this.altitude;
 
 	this.sw_scale;
-	this.sw_azimuth;
 	this.sw_altitude;
 
 	this.fullMap = false;
@@ -314,9 +314,8 @@ function Console() {
 		if(scale < windowSize.getRadius()) return;
 		this.scale = scale;
 	}
-	this.forceSetScale = function(scale) { // use this to show full sky chart (full ball)
+	this.forceSetScale = function(scale) {
 		this.scale = scale;
-		this.setAzimuth(180);
 		this.setAltitude(90);
 	}
 	this.setAzimuth = function(azimuth) {
@@ -333,12 +332,7 @@ function Console() {
 		this.sw_altitude = this.altitude;
 	}
 	this.restore = function() {
-		if(windowSize.getRadius() > this.sw_scale) {
-			this.scale = windowSize.getRadius();
-		} else {
-			this.scale = this.sw_scale;
-		}
-		this.azimuth = this.sw_azimuth;
+		this.scale = (windowSize.getRadius() > this.sw_scale) ? windowSize.getRadius() : this.scale = this.sw_scale;;
 		this.altitude = this.sw_altitude;
 	}
 
@@ -353,7 +347,7 @@ function Console() {
 		this.scale += zoom;
 	}
 	this.addAzimuth = function(angle) {
-		if(this.fullMap) return;
+//		if(this.fullMap) return;
 		this.azimuth += angle;
 	}
 	this.addAltitude = function(angle) {
@@ -403,12 +397,13 @@ function PlotSet(plotSet, lineSet, rotation) {
 			}
 		}
 		for(var c = 0; c < this.lineSet.length; c++) {
+			ctx.save();
+			ctx.strokeStyle = "darkred";
 			for(var i = 0; i < this.lineSet[c].length; i++) {
 				if(!this.lineSet[c][i]) continue;
 				if(!this.plotSet[this.lineSet[c][i].id].plotPosition(this.rotation)) continue;
 				var myxy = this.plotSet[this.lineSet[c][i].id].plotPosition(this.rotation);
-				if(!this.plotSet[this.lineSet[c][i].id].checkOnScreen(myxy)) continue;
-//			alert()
+				if(!this.plotSet[this.lineSet[c][i].id].checkOnScreen(myxy)) continue; // performance problem?
 				for(var j = 0; j < this.lineSet[c][i].nbh.length; j++) {
 					if(this.lineSet[c][i].connected[j]) continue;
 					var ij = this.lineSet[c][i].nbh[j];
@@ -427,6 +422,7 @@ function PlotSet(plotSet, lineSet, rotation) {
 					}
 				}
 			}
+			ctx.restore()
 		}
 	}
 
@@ -472,9 +468,6 @@ function Line(id, nbh) {
 		} else {
 			xyz = ezGL.rotateX(xyz, 90);
 		}
-//		if(console.lockUnderFeet) {
-//			if(xyz[1] + 0.1 < 0) return false; // draw star above earth surface only.
-//		}
 
 		// =========== show sky section ============
 		xyz = ezGL.scale(xyz, console.scale);
@@ -482,7 +475,6 @@ function Line(id, nbh) {
 		xyz = ezGL.rotateX(xyz, console.altitude);
 //		if(xyz[1] < 0) return false;
 
-//		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
 		this.xy = [xyz[0], xyz[2]];
 		return this.xy;
 	}
@@ -566,6 +558,7 @@ function initPlot() {
 	initOthersPlot();
 
 	starSet = new PlotSet(star, constal, true);
+	
 	sky = new Sky(true);
 	observer = new Sky(false);
 	ground = new Ground();
@@ -592,12 +585,14 @@ function drawSky() {
 
 	// ==================== animation handler =================
 	if(mouse.leftDown) mouse.drag();
-	if(mouse.unclick) mouse.releaseHandler();
+	else mouse.releaseHandler();
 	if(mouse.dblGoto) mouse.gotoHandler();
 
 	// ===================== skyyy ===========================
 	if(!stopMoving) {
-		moveIndex = -currentTime();
+		moveIndex = -50; //-currentTime();
+	} else {
+		moveIndex = 130;
 	}
 	ctx.save(); // after clip, anything out there will be unseen (but still calculate)
 	ground.plotGround();
@@ -611,7 +606,7 @@ function drawSky() {
 //	skylineSet.plotSky();
 //	obslineSet.plotSky();
 //	labelSet.plotSky();
-//	compassSet.plotSky();
+	compassSet.plotSky();
 
 
 	ctx.restore(); // unclip
@@ -631,14 +626,15 @@ function drawSky() {
 		ctx.fillText("mouse = " + observer.stringPosition(mouse.oxy), -500, 70);
 		ctx.fillText("origin = " + observer.stringPosition([0, 0]), -500, 90);
 
-			ctx.fillText(mouse.oxy, -500, -50);
+			ctx.fillText(mouse.gotAltz[0], -500, -50);
+			ctx.fillText(mouse.gotAltz[1], -500, -35);
 //			ctx.fillText(mouse.obsAltz, -500, -35);
 			ctx.fillText(mouse.releaseSpeedFunction*1000, -500, -20);
 			ctx.fillText(mouse.gotSpeed, -400, -50);
 			ctx.fillText(mouse.nowSpeed, -400, -35);
 			ctx.fillText(mouse.releaseSpeed, -400, -20);
 			
-			ctx.fillText(mouse.unclick, 500, -35);
+//			ctx.fillText(mouse.unclick, 500, -35);
 			ctx.fillText(mouse.leftDown, 500, -20);
 			ctx.fillText(mouse.dblGoto, 500, -5);
 	}
@@ -648,6 +644,7 @@ function drawSky() {
 //	ctx.fillText(keyboard.arrowDown, 400, -50);
 //	ctx.fillText(keyboard.panning, 400, -35);
 
+//	ctx.fillText(console.scale, 0, 0);
 	ctx.fillText("object draw = " + drawingObject, -575, -280);
 	ctx.fillText("object lined = " + liningObject, -575, -265);
 	ctx.fillText("draw complete!", -575, -300); // use this to check if canvas has no problems

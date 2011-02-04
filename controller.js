@@ -85,7 +85,6 @@ function KeyboardControl() {
 function MouseControl() {
 	this.control = true;
 
-	this.unclick = true;
 	this.leftDown = false;
 	this.dblGoto = false;
 
@@ -128,10 +127,11 @@ function MouseControl() {
 		if(console.forceZoom) return;
 		this.clickingPosition();
 
-		this.desAltz = observer.position(this.cxy);
-		this.cenAltz = observer.position([0, 0]);
+		desAltz = observer.position(this.cxy);
+		cenAltz = observer.position([0, 0]);
+		dwnAltz = observer.position([0, 1]);
 
-		this.gotAltz = [-this.desAltz[0] + this.cenAltz[0], this.desAltz[1] - this.cenAltz[1]];
+		this.gotAltz = [-desAltz[0] + dwnAltz[0], desAltz[1] - cenAltz[1]];
 		if(this.gotAltz[0] > 180) this.gotAltz[0] -= 360;
 		else if(this.gotAltz[0] < -180) this.gotAltz[0] += 360;
 
@@ -146,16 +146,19 @@ function MouseControl() {
 	this.drag = function() {
 		if(console.forceZoom) return;
 		this.dblGoto = false;
-		if(!this.control) return;
 		this.dragingPosition();
-		this.leftDown = true;
-		if(this.leftDown && !this.unclick) {
+		if(this.leftDown) {
 			dragVector = [this.dxyN[0] - this.dxyO[0], this.dxyN[1] - this.dxyO[1]];
 			dragSpeed = Math.sqrt(Math.pow(dragVector[0], 2) + Math.pow(dragVector[1], 2));
 			this.speedHandler(dragSpeed);
 
 			obsAtzO = observer.position(this.dxyO);
 			obsAtzN = observer.position(this.dxyN);
+
+			if(!obsAtzN) {
+				this.release();
+				return
+			}
 
 			this.obsAltz = [obsAtzN[0] - obsAtzO[0], obsAtzN[1] - obsAtzO[1]];
 			if(this.obsAltz[0] > 180) this.obsAltz[0] -= 360;
@@ -167,13 +170,12 @@ function MouseControl() {
 		} else {
 			this.obsAltz = [0, 0];
 		}
-		this.unclick = false;
+		this.leftDown = true;
 	}
 	this.release = function() {
 		if(console.forceZoom) return;
-		if(!this.control || !this.leftDown) return;
+		if(!this.leftDown) return;
 		this.leftDown = false;
-		this.unclick = true;
 		this.dxyO = [];
 		this.dxyN = [];
 		this.speedSet = [0, 0, 0, 0, 0];
@@ -187,8 +189,9 @@ function MouseControl() {
 
 	this.farRadius = function() {
 		toMouse = Math.sqrt(Math.pow(this.oxy[0], 2) + Math.pow(this.oxy[1], 2));
-		if(toMouse > windowSize.getRadius()/2);
-		farFactor = Math.pow(Math.cos(toMouse*Math.PI/windowSize.getRadius()), 2);
+		if(toMouse < windowSize.getRadius()/2)
+			farFactor = Math.pow(Math.cos(toMouse*Math.PI/windowSize.getRadius()), 2);
+		else farFactor = 0;
 		return farFactor;
 	}
 	this.getZenith = function() {
@@ -226,6 +229,8 @@ function MouseControl() {
 				console.changeFullMap();
 				ground.changeFullMap();
 				console.forceZoom = true;
+			} else if(console.scale > 10*windowSize.getRadius()) { // actualy, might be max or sth?
+				zoomSpeed = windowSize.getRadius() - console.scale;
 			} else if(this.farRadius() > 0) {
 				zoomSpeed = this.farRadius()*console.scale;
 			} else zoomSpeed = 0;
