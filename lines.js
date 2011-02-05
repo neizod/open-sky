@@ -10,11 +10,11 @@ var label = [];
 
 function initOthersPlot() {
 // ==================== Draw Poor Sky Line ========================
-	for(j = 0; j <= 47 ;j++) {
+	for(j = 0; j < 48 ;j++) {
 		for(i = 2; i <= 34; i++) {
-			if(j%4 != 0 && (i == 34 || i == 2)) continue
-			if(j%2 != 0 && (i == 32 || i == 4)) continue
-			if(i == 33 || i == 31 || i == 3 || i == 5) continue
+//			if(j%2 != 0 && (i == 34 || i == 2)) continue
+//			if(j%2 != 0 && (i == 32 || i == 4)) continue
+//			if(i == 33 || i == 3) continue
 			k = 36*j + i;
 			lnSymb = "|";
 //			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator

@@ -59,15 +59,15 @@ function WindowSize() {
 	this.halfHeight = Math.floor(this.height/2);
 
 	this.getRadius = function() {
-		this.radius = Math.sqrt(Math.pow(this.width, 2) + Math.pow(this.height, 2));
-		this.radius *= 1.125/2;
-		this.radius = Math.floor(this.radius);
-		return this.radius;
+		var radius = Math.sqrt(Math.pow(this.width, 2) + Math.pow(this.height, 2));
+		radius *= 1.125/2;
+		radius = Math.floor(radius);
+		return radius;
 	}
 	this.getFullBall = function() {
-		this.radius = (this.width < this.height) ? this.width : this.height;
-		this.radius *= 0.950/2;
-		return this.radius;
+		var radius = (this.width < this.height) ? this.width : this.height;
+		radius *= 0.950/2;
+		return radius;
 	}
 }
 
@@ -75,91 +75,86 @@ function Sky(rotation) {
 	this.rotation = rotation;
 
 	this.position = function(xy) {
-		this.radec = [];
-		this.xyz = [0, 0, 0];
-		this.ref = [0, 0, 0];
+		var radec = [];
+		var xyz = [0, 0, 0];
 
-		this.xyz[0] = xy[0];
-		this.xyz[2] = xy[1];
-		this.xyz[1] = Math.sqrt(Math.pow(console.scale, 2) - Math.pow(this.xyz[0], 2) - Math.pow(this.xyz[2], 2));
-		if(isNaN(this.xyz[1])) return;
+		xyz[0] = xy[0];
+		xyz[2] = xy[1];
+		xyz[1] = Math.sqrt(Math.pow(console.scale, 2) - Math.pow(xyz[0], 2) - Math.pow(xyz[2], 2));
+		if(isNaN(xyz[1])) return;
 
-		this.xyz = ezGL.rotateX(this.xyz, -console.altitude);
-		this.xyz = ezGL.rotateY(this.xyz, -console.azimuth);
-		this.xyz = ezGL.scale(this.xyz, 1/console.scale);
+		xyz = ezGL.rotateX(xyz, -console.altitude);
+		xyz = ezGL.rotateY(xyz, -console.azimuth);
+		xyz = ezGL.scale(xyz, 1/console.scale);
 
 		if(this.rotation) {
-			this.xyz = ezGL.rotateX(this.xyz, -console.latitude);
-			this.xyz = ezGL.rotateZ(this.xyz, -moveIndex); // rotate sky by celestial-pole-axis.
+			xyz = ezGL.rotateX(xyz, -console.latitude);
+			xyz = ezGL.rotateZ(xyz, -moveIndex); // rotate sky by celestial-pole-axis.
 		} else {
-			this.xyz = ezGL.rotateX(this.xyz, -90);
+			xyz = ezGL.rotateX(xyz, -90);
 		}
-		this.ref = ezGL.rotateZ(this.xyz, 90); // create ref point at 90 degree ahead
+		var ref = ezGL.rotateZ(xyz, 90); // create ref point at 90 degree ahead
 
-		this.xyz = ezGL.switchCoordinateSystem(this.xyz);
-		this.ref = ezGL.switchCoordinateSystem(this.ref);
+		xyz = ezGL.switchCoordinateSystem(xyz);
+		ref = ezGL.switchCoordinateSystem(ref);
 
-		this.rDec = Math.asin(this.xyz[2]);
-		this.rRA =  Math.asin(this.xyz[0] / Math.cos(this.rDec));
+		var rDec = Math.asin(xyz[2]);
+		var rRA =  Math.asin(xyz[0] / Math.cos(rDec));
 
-		this.refDec = Math.asin(this.ref[2]);
-		this.refRA =  Math.asin(this.ref[0] / Math.cos(this.refDec));
+		var refDec = Math.asin(ref[2]);
+		var refRA =  Math.asin(ref[0] / Math.cos(refDec));
 
-		this.radec[0] = this.rRA*12/Math.PI;
-		this.radec[1] = this.rDec*180/Math.PI;;
-		
-		this.refRA = this.refRA*12/Math.PI;
+		var radec = [rRA*12/Math.PI, rDec*180/Math.PI];
+		refRA = refRA*12/Math.PI;
 
-		if(this.refRA < 0) {
-			this.radec[0] = 12 - this.radec[0];
-		} else {
-			if(this.radec[0] < 0) this.radec[0] = 24 + this.radec[0];
-		}
-		if(isNaN(this.radec[0])) this.radec[0] = 180;
+		if(refRA < 0) radec[0] = 12 - radec[0];
+		else if(radec[0] < 0) radec[0] = 24 + radec[0];
+
+		if(isNaN(radec[0])) radec[0] = 180;
 		if(!this.rotation) {
-			this.radec[0] = (36 - this.radec[0])%24;
-			this.radec[0] *= 15;
+			radec[0] = (36 - radec[0])%24;
+			radec[0] *= 15;
 		}
-		return this.radec;
+		return radec;
 	}
 	this.stringPosition = function(xy) {
 		if(!this.position(xy)) return;
-		this.radec = this.position(xy);
+		radec = this.position(xy);
 		if(this.rotation) { // ra dec
-			this.text = "RA " + this.toDegree(this.radec[0], false);
-			this.text += ",   Dec " + this.toDegree(this.radec[1], true);
+			var text = "RA " + this.toDegree(radec[0], false);
+			text += ",   Dec " + this.toDegree(radec[1], true);
 		} else { // atz, att
-			this.text = this.toDegree(this.radec[0], true);
-			this.text += ",   " + this.toDegree(this.radec[1], true);
+			var text = this.toDegree(radec[0], true);
+			text += ",   " + this.toDegree(radec[1], true);
 		}
-		return this.text;
+		return text;
 	}
 	this.toDegree = function(decimal, type) {
-		if(type) this.separator = ["d ", "' ","\""]; // !!!!!!!!!!!! need degree symbol (small o)
-		else this.separator = ["h ", "m ", "s"];
+		if(type) var separator = ["d ", "' ","\""]; // !!!!!!!!!!!! need degree symbol (small o)
+		else var separator = ["h ", "m ", "s"];
 
-		this.minusSign = false
-		this.text = "";
+		var minusSign = false
+		var text = "";
 		if(decimal < 0) {
 			decimal = -decimal;
-			this.minusSign = true;
+			minusSign = true;
 		}
-		this.abc = [];
-		this.abc[0] = Math.floor(decimal);
-		this.abc[1] = decimal - this.abc[0];
-		this.abc[1] *= 60;
-		this.abc[2] = this.abc[1];
-		this.abc[1] = Math.floor(this.abc[1]);
-		this.abc[2] = this.abc[2] - this.abc[1];
-		this.abc[2] *= 60
-		this.abc[2] = Math.floor(this.abc[2]*10)/10;
+		var abc = [];
+		abc[0] = Math.floor(decimal);
+		abc[1] = decimal - abc[0];
+		abc[1] *= 60;
+		abc[2] = abc[1];
+		abc[1] = Math.floor(abc[1]);
+		abc[2] = abc[2] - abc[1];
+		abc[2] *= 60
+		abc[2] = Math.floor(abc[2]*10)/10;
 
-		if(!(this.abc[0] == 0 && this.abc[1] == 0 && this.abc[2] == 0) && this.minusSign) this.text += "-";
+		if(!(abc[0] == 0 && abc[1] == 0 && abc[2] == 0) && minusSign) text += "-";
 		// !!!!!!!!!!!!!!!!! seriously, how to compare Each value in array???
 		for(i = 0; i < 3; i++) {
-			this.text += this.abc[i] + this.separator[i];
+			text += abc[i] + separator[i];
 		}
-		return this.text;
+		return text;
 	}
 }
 function Star(name, ra, dec, mag) {
@@ -183,8 +178,8 @@ function Star(name, ra, dec, mag) {
 					  Math.cos(this.rRA)*Math.cos(this.rDec),
 					  Math.sin(this.rDec)];
 	this.getRadius = function() {
-		this.radius = (6 - this.mag > 1) ? 6 - this.mag : 1;
-		return this.radius;
+		var radius = (6 - this.mag > 1) ? 6 - this.mag : 1;
+		return radius;
 	}
 
 	this.plotSky = function(skyRotation) {
@@ -202,7 +197,7 @@ function Star(name, ra, dec, mag) {
 	}
 	this.plotPosition = function(skyRotation) {
 		// =========== init sky section ============
-		xyz = this.cartesian;
+		var xyz = this.cartesian;
 		xyz = ezGL.switchCoordinateSystem(xyz);
 		if(skyRotation) {
 			xyz = ezGL.rotateZ(xyz, moveIndex); // rotate sky by celestial-pole-axis. -- use -20 to see orion
@@ -211,14 +206,14 @@ function Star(name, ra, dec, mag) {
 			xyz = ezGL.rotateX(xyz, 90);
 		}
 		if(console.lockUnderFeet) {
-			if(xyz[1] + 0.25 < 0) return false; // draw star above earth surface only.
+			if(xyz[1] + 0.25 < 0) return; // draw star above earth surface only.
 		}
 
 		// =========== show sky section ============
 		xyz = ezGL.scale(xyz, console.scale);
 		xyz = ezGL.rotateY(xyz, console.azimuth);
 		xyz = ezGL.rotateX(xyz, console.altitude);
-		if(xyz[1] < 0) return false;
+		if(xyz[1] < 0) return;
 
 		var xy = [xyz[0], xyz[2]];
 //		if(!this.checkOnScreen(xyz[0], xyz[2])) return false; // draw on screen only
@@ -255,7 +250,7 @@ function Star(name, ra, dec, mag) {
 
 	this.checkMouseOver = function(xy) {
 		if(!this.selectable) return;
-		overSize = 2;// 2.5
+		var overSize = 2;// 2.5
 		mouseX = mouse.oxy[0] - xy[0];
 		mouseY = mouse.oxy[1] - xy[1];
 
@@ -270,24 +265,18 @@ function Star(name, ra, dec, mag) {
 		}
 	}
 	this.checkOnScreen = function(xy) {
-		overSize = 1.025;
+		overSize = 1.03;
 		if(xy[0] > overSize*windowSize.halfWidth || xy[0] < -overSize*windowSize.halfWidth ||
 		   xy[1] > overSize*windowSize.halfHeight || xy[1] < -overSize*windowSize.halfHeight)
 			return false;
 		return true;
 	}
 	this.checkVisible = function(min_mag) {
-		if(this.mag > min_mag) this.visible = false;
-		else this.visible = true;
+		this.visible = (this.mag < min_mag);
 	}
 	this.checkSignificant = function(min_mag) {
-		if(this.mag > min_mag) {
-			this.nameable = false;
-			this.selectable = false;
-		} else {
-			this.nameable = true;
-			this.selectable = true;
-		}
+		this.nameable = (this.mag < min_mag);
+		this.selectable = (this.mag < min_mag);
 	}
 }
 function Console() {
@@ -332,13 +321,13 @@ function Console() {
 		this.sw_altitude = this.altitude;
 	}
 	this.restore = function() {
-		this.scale = (windowSize.getRadius() > this.sw_scale) ? windowSize.getRadius() : this.scale = this.sw_scale;;
+		this.scale = (windowSize.getRadius() > this.sw_scale) ? windowSize.getRadius() : this.sw_scale;
 		this.altitude = this.sw_altitude;
 	}
 
 	this.addScale = function(zoom) {
 		if(this.fullMap) return;
-		maxZoom = 20000;  // !!!!!!!!!!! what's max?????????????????
+		var maxZoom = 20000;  // !!!!!!!!!!! what's max?????????????????
 		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
 		else if(this.scale + zoom > maxZoom) this.scale = maxZoom;
 		else this.scale += zoom;
@@ -347,7 +336,6 @@ function Console() {
 		this.scale += zoom;
 	}
 	this.addAzimuth = function(angle) {
-//		if(this.fullMap) return;
 		this.azimuth += angle;
 	}
 	this.addAltitude = function(angle) {
@@ -358,7 +346,7 @@ function Console() {
 	}
 
 	this.panFactor = function() {
-		angle = 1.5*windowSize.getRadius()/this.scale;
+		var angle = 1.5*windowSize.getRadius()/this.scale;
 		return angle;
 	}
 	this.changeFullMap = function() {
@@ -373,12 +361,14 @@ function Console() {
 		this.lockUnderFeet = !this.lockUnderFeet;
 	}
 }
-function PlotSet(plotSet, lineSet, rotation) {
+function PlotSet(plotSet, lineSet, colour, rotation) {
 	this.plotSet = plotSet;
 	this.lineSet = lineSet;
+	this.colour = colour;
+	this.rotation = rotation;
+
 	this.visible = true;
 	this.nameable = true;
-	this.rotation = rotation;
 
 	this.plotSky = function() {
 		if(!this.visible) return;
@@ -398,7 +388,7 @@ function PlotSet(plotSet, lineSet, rotation) {
 		}
 		for(var c = 0; c < this.lineSet.length; c++) {
 			ctx.save();
-			ctx.strokeStyle = "darkred";
+			ctx.strokeStyle = this.colour;
 			for(var i = 0; i < this.lineSet[c].length; i++) {
 				if(!this.lineSet[c][i]) continue;
 				if(!this.plotSet[this.lineSet[c][i].id].plotPosition(this.rotation)) continue;
@@ -558,15 +548,15 @@ function initPlot() {
 	initOthersPlot();
 	initLine();
 
-	starSet = new PlotSet(star, constal, true);
 	
 	sky = new Sky(true);
 	observer = new Sky(false);
 	ground = new Ground();
 
-	skylineSet = new PlotSet(skyline, line, true);
-	obslineSet = new PlotSet(obsline, line, false);
-	compassSet = new PlotSet(compass, line, false);
+	starSet = new PlotSet(star, constal, "rgba(150, 0, 0, 0.9)", true);
+	skylineSet = new PlotSet(skyline, line, "rgba(0, 50, 0, 0.5)", true);
+	obslineSet = new PlotSet(skyline, line, "rgba(80, 80, 0, 0.5)", false);
+	compassSet = new PlotSet(compass, line, "black", false);
 //	labelSet = new PlotSet(label, true);
 	starSet.checkEachVisible(6);
 	starSet.checkEachNameable(7);
@@ -601,12 +591,14 @@ function drawSky() {
 	drawingObject = 0;
 	liningObject = 0;
 
+	skylineSet.plotLine();
+	obslineSet.plotLine();
+//	skylineSet.plotSky();
+//	obslineSet.plotSky();
+
 	starSet.plotLine();
 	starSet.plotSky();
 
-	skylineSet.plotLine();
-	skylineSet.plotSky();
-	obslineSet.plotSky();
 //	labelSet.plotSky();
 	compassSet.plotSky();
 
