@@ -3,24 +3,28 @@ var obsline = [];
 var compass = [];
 var label = [];
 
-var line = [];
-for(i = 0; i < 88; i++) {
-	line[i] = [];
-}
+//var line = [];
+//for(i = 0; i < 88; i++) {
+//	line[i] = [];
+//}
 
 function initOthersPlot() {
 // ==================== Draw Poor Sky Line ========================
 	for(j = 0; j <= 47 ;j++) {
-		for(i = 0; i <= 36; i++) {
+		for(i = 2; i <= 34; i++) {
+			if(j%4 != 0 && (i == 34 || i == 2)) continue
+			if(j%2 != 0 && (i == 32 || i == 4)) continue
+			if(i == 33 || i == 31 || i == 3 || i == 5) continue
 			k = 36*j + i;
 			lnSymb = "|";
-			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
-			skyline[k] = new Star(lnSymb, j/2, -90 + 5*i, -10);
+//			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
+			skyline[k] = new Star(k, j/2, 90 - 5*i, -10);
 		}
 	}
 // ============== Draw Poor Observer Line ========================
 	for(j = 0; j <= 47 ;j++) {
 		for(i = 1; i <= 35; i++) {
+			if(j%2 != 0 && i == 1 || i == 2) continue
 			k = 36*j + i;
 			lnSymb = "^";
 			obsline[k] = new Star(lnSymb, j/2, -90 + 5*i, -10);
@@ -50,11 +54,11 @@ function initOthersPlot() {
 	label[13] = new Star("Alifa al Farkadain", 15.734294444444444, 77.7945, -10);
 	label[14] = new Star("Anwar al Farkadain", 16.291805555555555, 75.75469444444444, -10);
 // ================ test line ========================
-	line[0][0] = new Line(1852, [1,2,3]);
-	line[0][1] = new Line(1713, [0]);
-	line[0][2] = new Line(2061, [0]);
+//	line[0][0] = new Line(1852, [1,2,3]);
+//	line[0][1] = new Line(1713, [0]);
+//	line[0][2] = new Line(2061, [0]);
 //	line[0][3] = new Line(1790, [0]);
-	line[0][4] = new Line(2004, [5]);
-	line[0][5] = new Line(1903, [4, 8]);
-	line[0][8] = new Line(1948, [5]);
+//	line[0][4] = new Line(2004, [5]);
+//	line[0][5] = new Line(1903, [4, 8]);
+//	line[0][8] = new Line(1948, [5]);
 }

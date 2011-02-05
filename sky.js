@@ -545,7 +545,7 @@ function initConsole() {
 	console = new Console();
 	tool.resizeHandler();
 
-	console.setLatitude(30); // where you live? ^__^
+	console.setLatitude(40); // where you live? ^__^
 	console.setScale(windowSize.getRadius()); // old parameter = 750, need to be re calculate
 	console.setAzimuth(90); // move mouse in vertical. parameter between 0 (north) round to 360
 	console.setAltitude(20); // move mouse in horizental. parameter between 0 to 90 (zenith)
@@ -556,6 +556,7 @@ function initPlot() {
 	initStar();
 	initConstal();
 	initOthersPlot();
+	initLine();
 
 	starSet = new PlotSet(star, constal, true);
 	
@@ -571,7 +572,7 @@ function initPlot() {
 	starSet.checkEachNameable(7);
 	starSet.nameable = false;
 
-//	obslineSet.visible = false;
+	obslineSet.visible = false;
 }
 
 function drawSky() {
@@ -603,8 +604,9 @@ function drawSky() {
 	starSet.plotLine();
 	starSet.plotSky();
 
-//	skylineSet.plotSky();
-//	obslineSet.plotSky();
+	skylineSet.plotLine();
+	skylineSet.plotSky();
+	obslineSet.plotSky();
 //	labelSet.plotSky();
 	compassSet.plotSky();
 
@@ -652,7 +654,7 @@ function drawSky() {
 }
 
 function init() {
-//	alert(!!a[0]) // test somthing here!! (only 1 time alert)
+//	alert() // test somthing here!! (only 1 time alert)
 	var canvas = document.getElementById("sky");
 	if(canvas.getContext) {
 		ctx = canvas.getContext("2d");
