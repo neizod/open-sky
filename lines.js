@@ -16,9 +16,9 @@ function initOthersPlot() {
 //			if(j%2 != 0 && (i == 32 || i == 4)) continue
 //			if(i == 33 || i == 3) continue
 			k = 36*j + i;
-			lnSymb = "|";
-//			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
-			skyline[k] = new Star(k, j/2, 90 - 5*i, -10);
+			lnSymb = "";
+			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
+			skyline[k] = new Star(lnSymb, j/2, 90 - 5*i, -10);
 		}
 	}
 // ============== Draw Poor Observer Line ========================

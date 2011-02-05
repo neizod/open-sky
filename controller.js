@@ -28,11 +28,18 @@ function KeyboardControl() {
 				stopMoving = !stopMoving;
 				break;
 			case 76: // l -- show sky line
-				skylineSet.changeVisible();
+				if(!skylineSet.visible && !obslineSet.visible)
+					skylineSet.changeVisible();
+				else if(skylineSet.visible && !obslineSet.visible)
+					obslineSet.changeVisible();
+				else if(skylineSet.visible && obslineSet.visible)
+					skylineSet.changeVisible();
+				else
+					obslineSet.changeVisible();
 				break;
-			case 71: // g -- show grid line
-				obslineSet.changeVisible();
-				break;
+//			case 71: // g -- show grid line
+//				obslineSet.changeVisible();
+//				break;
 			case 78: // n -- show name
 				starSet.changeNameable();
 				break;

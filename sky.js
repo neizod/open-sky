@@ -4,7 +4,7 @@ var console;
 var windowSize;
 var starSet, skylineSet, obslineSet, compassSet, labelSet;
 
-var stopMoving = false;
+var stopMoving = false; // just debug
 var moveIndex;
 var drawingObject;
 var liningObject;
@@ -380,6 +380,7 @@ function PlotSet(plotSet, lineSet, colour, rotation) {
 		}
 	}
 	this.plotLine = function() {
+		if(!this.visible) return;
 		for(var c = 0; c < this.lineSet.length; c++) {
 			for(var i = 0; i < this.lineSet[c].length; i++) {
 				if(!this.lineSet[c][i]) continue;
@@ -584,6 +585,7 @@ function drawSky() {
 		moveIndex = -50; //-currentTime();
 	} else {
 		moveIndex = 130;
+//		moveIndex = 100;
 	}
 	ctx.save(); // after clip, anything out there will be unseen (but still calculate)
 	ground.plotGround();
@@ -593,8 +595,8 @@ function drawSky() {
 
 	skylineSet.plotLine();
 	obslineSet.plotLine();
-//	skylineSet.plotSky();
-//	obslineSet.plotSky();
+	skylineSet.plotSky();
+	obslineSet.plotSky();
 
 	starSet.plotLine();
 	starSet.plotSky();
