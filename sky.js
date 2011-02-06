@@ -536,7 +536,7 @@ function initConsole() {
 	console = new Console();
 	tool.resizeHandler();
 
-	console.setLatitude(40); // where you live? ^__^
+	console.setLatitude(30); // where you live? ^__^
 	console.setScale(windowSize.getRadius()); // old parameter = 750, need to be re calculate
 	console.setAzimuth(90); // move mouse in vertical. parameter between 0 (north) round to 360
 	console.setAltitude(20); // move mouse in horizental. parameter between 0 to 90 (zenith)
