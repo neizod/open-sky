@@ -27,6 +27,19 @@ function KeyboardControl() {
 			case 83: // s -- stop sky
 				stopMoving = !stopMoving;
 				break;
+			case 67: // c -- constellation
+				switch(console.constel) {
+					case 0:
+						starSet.changeLine(constal);
+						break;
+					case 1:
+						starSet.changeLine(altconstal);
+						break;
+					default:
+						starSet.changeLine([]);
+				}
+				console.changeConstel()
+				break;
 			case 76: // l -- show sky line
 				if(!skylineSet.visible && !obslineSet.visible)
 					skylineSet.changeVisible();
@@ -234,7 +247,6 @@ function MouseControl() {
 			if(console.fullMap) {
 				zoomSpeed = windowSize.getRadius() - console.scale;
 				console.changeFullMap();
-				ground.changeFullMap();
 				console.forceZoom = true;
 			} else if(console.scale > 10*windowSize.getRadius()) { // actualy, might be max or sth?
 				zoomSpeed = windowSize.getRadius() - console.scale;
@@ -254,7 +266,6 @@ function MouseControl() {
 		} else {
 			this.dblGoto = false;
 			if(console.forceZoom) {
-				ground.changeFullMap();
 				console.forceZoom = false;
 			}
 		}

@@ -18,7 +18,7 @@ function initOthersPlot() {
 			k = 36*j + i;
 			lnSymb = "";
 			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
-			skyline[k] = new Star(lnSymb, j/2, 90 - 5*i, -10);
+			skyline[k] = new Star(lnSymb, j/2, 90 - 5*i, -10, "#005500");
 		}
 	}
 // ============== Draw Poor Observer Line ========================
@@ -27,15 +27,15 @@ function initOthersPlot() {
 			if(j%2 != 0 && i == 1 || i == 2) continue
 			k = 36*j + i;
 			lnSymb = "^";
-			obsline[k] = new Star(lnSymb, j/2, -90 + 5*i, -10);
+			obsline[k] = new Star(lnSymb, j/2, -90 + 5*i, -10, "#005500");
 		}
 	}
 // ======================= compass ========================
 	compassName = ["S", "SE", "E", "NE", "N", "NW", "W", "SW"]
 	for(i = 0; i < 8; i++) {
-		compass[i] = new Star(compassName[i], 3*i, 0.00000000001, -10);
+		compass[i] = new Star(compassName[i], 3*i, 0.00000000001, -10, "#ffff00");
 	}
-	compass[8] = new Star("Z", 0, 90, -10);
+	compass[8] = new Star("Z", 0, 90, -10, "#ffff00");
 // ======================= Orion ============================
 	label[0] = new Star("Betelgeuse", 5.919525, 7.407027777777775, -10);
 	label[1] = new Star("Rigel", 5.242297777777778, -8.364166666666666, -10);
