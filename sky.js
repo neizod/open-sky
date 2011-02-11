@@ -79,14 +79,20 @@ function Sky(rotation) {
 		var radec = [];
 		var xyz = [0, 0, 0];
 
-		xyz[0] = xy[0];
-		xyz[2] = xy[1];
-		xyz[1] = Math.sqrt(Math.pow(console.scale, 2) - Math.pow(xyz[0], 2) - Math.pow(xyz[2], 2));
-		if(isNaN(xyz[1])) return;
-
+		var angle = Math.sqrt(Math.pow(xy[0], 2) + Math.pow(xy[1], 2));
+		angle /= console.scale;
+		if(angle > 1) return;
+		angle *= Math.PI/2;
+		var posAng = Math.atan(xy[1]/xy[0]);
+		if(isNaN(posAng)) posAng = 0;
+		var sgn = xy[0]/Math.abs(xy[0]);
+		if(isNaN(sgn)) sgn = 1;
+		xyz[1] = Math.cos(angle);
+		xyz[0] = sgn*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.cos(posAng);
+		xyz[2] = sgn*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.sin(posAng);
+		
 		xyz = ezGL.rotateX(xyz, -console.altitude);
 		xyz = ezGL.rotateY(xyz, -console.azimuth);
-		xyz = ezGL.scale(xyz, 1/console.scale);
 
 		if(this.rotation) {
 			xyz = ezGL.rotateX(xyz, -console.latitude);
@@ -100,10 +106,16 @@ function Sky(rotation) {
 		ref = ezGL.switchCoordinateSystem(ref);
 
 		var rDec = Math.asin(xyz[2]);
-		var rRA =  Math.asin(xyz[0] / Math.cos(rDec));
+		if(xyz[0] / Math.cos(rDec) <= 1)
+			var rRA = Math.asin(xyz[0] / Math.cos(rDec));
+		else
+			var rRA = Math.asin(1);
 
 		var refDec = Math.asin(ref[2]);
-		var refRA =  Math.asin(ref[0] / Math.cos(refDec));
+		if(ref[0] / Math.cos(refDec) <= 1)
+			var refRA =  Math.asin(ref[0] / Math.cos(refDec));
+		else
+			var refRA =  Math.asin(1);
 
 		var radec = [rRA*12/Math.PI, rDec*180/Math.PI];
 		refRA = refRA*12/Math.PI;
@@ -193,6 +205,7 @@ function Star(name, ra, dec, mag, colour) {
 		if(this.mag != -10) {
 			this.plotStar(xy);
 		} else {
+			if(this.name == "") return;
 			ctx.save();
 			ctx.fillStyle = this.colour;
 			ctx.fillText(this.name, xy[0], xy[1]);
@@ -211,16 +224,25 @@ function Star(name, ra, dec, mag, colour) {
 			xyz = ezGL.rotateX(xyz, 90);
 		}
 		if(console.lockUnderFeet) {
-			if(xyz[1] + 0.25 < 0) return; // draw star above earth surface only.
+			if(xyz[1] + 0.2 < 0) return; // draw star above earth surface only.
 		}
 
 		// =========== show sky section ============
-		xyz = ezGL.scale(xyz, console.scale);
 		xyz = ezGL.rotateY(xyz, console.azimuth);
 		xyz = ezGL.rotateX(xyz, console.altitude);
-		if(xyz[1] < 0) return;
+		if(xyz[1] + 0.2 < 0) return;
 
-		var xy = [xyz[0], xyz[2]];
+		var angle = Math.atan(Math.sqrt(Math.pow(xyz[0], 2) + Math.pow(xyz[2], 2))/Math.abs(xyz[1]));
+		if(xyz[1] < 0) angle = Math.PI - angle;
+		angle *= 2/Math.PI;
+		var posAng = Math.atan(xyz[2]/xyz[0]);
+		var sgn = xyz[0] / Math.abs(xyz[0]);
+		if(isNaN(sgn)) sgn = 1;
+		var xy = [];
+		xy[0] = sgn*angle*Math.cos(posAng);
+		xy[1] = sgn*angle*Math.sin(posAng);
+		xy = ezGL.scale(xy, console.scale);
+
 		return xy;
 	}
 	this.plotName = function(xy) {
@@ -354,9 +376,10 @@ function Console() {
 	this.addScale = function(zoom) {
 		if(this.fullMap) return;
 		var maxZoom = 20000;  // !!!!!!!!!!! what's max?????????????????
-		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
+		this.scale += zoom
+/*		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
 		else if(this.scale + zoom > maxZoom) this.scale = maxZoom;
-		else this.scale += zoom;
+		else this.scale += zoom;*/
 	}
 	this.forceAddScale = function(zoom) {
 		this.scale += zoom;
@@ -526,28 +549,37 @@ function Background() {
 		ctx.fillRect(-windowSize.halfWidth, -windowSize.halfHeight, windowSize.width, windowSize.height);
 	}
 	this.plotGround = function() {
-		if(console.scale > windowSize.getRadius()/2) {
-			var xyz = [1, 0, 0]; // E
-			xyz = ezGL.switchCoordinateSystem(xyz);
-			xyz = ezGL.rotateX(xyz, 90);
-			xyz = ezGL.scale(xyz, console.scale);
-			xyz = ezGL.rotateY(xyz, 90);
-			xyz = ezGL.rotateX(xyz, console.altitude);
-			var a = console.scale;
-			var b = xyz[2];
-
-			var plotGroundSet = [];
-			for(var i = 0; i <= 40; i++) {
-				var x = (windowSize.halfWidth > console.scale) ? windowSize.halfWidth : console.scale;
-				x *= (i-20)/20;
-				var y = b*Math.sqrt(1 - Math.pow(x/a, 2));
-				plotGroundSet[i] = [x, y];
-			}
-			plotGroundSet[41] = [windowSize.halfWidth, windowSize.halfHeight+1];
-			plotGroundSet[42] = [-windowSize.halfWidth, windowSize.halfHeight+1];
-
-			ezGL.drawPolygon(plotGroundSet, this.groundFill);
+		var polygonNum = 24;
+		var groundSet = [];
+		for(var i = 0; i <= polygonNum; i++) {
+			groundSet[i] = (2178 - 36*i)%1728;
 		}
+		var plotGroundSet = [];
+		for(var i = 0; i <= polygonNum; i++) {
+			plotGroundSet[i] = this.groundPosition(skyline[groundSet[i]].cartesian);
+		}
+		plotGroundSet[++polygonNum] = [windowSize.halfWidth, windowSize.halfHeight+1];
+		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, windowSize.halfHeight+1];
+		ezGL.drawPolygon(plotGroundSet, this.groundFill);
+	}
+	this.groundPosition = function(cartesian) {
+		var xyz = cartesian;
+		xyz = ezGL.switchCoordinateSystem(xyz);
+		xyz = ezGL.rotateX(xyz, 90);
+		xyz = ezGL.rotateX(xyz, console.altitude);
+
+		var angle = Math.atan(Math.sqrt(Math.pow(xyz[0], 2) + Math.pow(xyz[2], 2))/Math.abs(xyz[1]));
+		if(xyz[1] < 0) angle = Math.PI - angle;
+		angle *= 2/Math.PI;
+		var posAng = Math.atan(xyz[2]/xyz[0]);
+		var sgn = xyz[0] / Math.abs(xyz[0]);
+		if(isNaN(sgn)) sgn = 1;
+		var xy = [];
+		xy[0] = sgn*angle*Math.cos(posAng);
+		xy[1] = sgn*angle*Math.sin(posAng);
+		xy = ezGL.scale(xy, console.scale);
+
+		return xy;
 	}
 }
 
@@ -604,7 +636,7 @@ function drawSky() {
 	// ===================== control handler ==================
 	window.addEventListener("keydown", keyboard.keyControl, true);
 //	document.addEventListener("click", mouse.right, false);
-
+test = 0 //= true;
 	// ==================== animation handler =================
 	if(mouse.leftDown) mouse.drag();
 	else mouse.releaseHandler();
@@ -613,7 +645,7 @@ function drawSky() {
 	// ===================== skyyy ===========================
 	if(!stopMoving) {
 		moveIndex = 0;
-//		moveIndex = -currentTime();
+		moveIndex = -currentTime();
 	} else {
 		moveIndex = 180;
 	}
@@ -645,13 +677,14 @@ function drawSky() {
 		ctx.fillText("mouse = " + observer.stringPosition(mouse.oxy), -500, 70);
 		ctx.fillText("origin = " + observer.stringPosition([0, 0]), -500, 90);
 
-			ctx.fillText(mouse.gotAltz[0], -500, -50);
-			ctx.fillText(mouse.gotAltz[1], -500, -35);
+			ctx.fillText(mouse.gotAltz[0], -550, -50);
+			ctx.fillText(mouse.gotAltz[1], -550, -35);
 			ctx.fillText(mouse.oxy, -500, -70);
-			ctx.fillText(mouse.releaseSpeedFunction*1000, -500, -20);
-			ctx.fillText(mouse.gotSpeed, -400, -50);
-			ctx.fillText(mouse.nowSpeed, -400, -35);
-			ctx.fillText(mouse.releaseSpeed, -400, -20);
+			ctx.fillText(mouse.cxy, -500, -60);
+			
+//				ctx.fillText(observer.position(mouse.cxy), -400, -50);
+				ctx.fillText(observer.position([0, 0]), -400, -35);
+				ctx.fillText(observer.position([0, 1]), -400, -20);
 			
 //			ctx.fillText(mouse.unclick, 500, -35);
 			ctx.fillText(mouse.leftDown, 500, -20);
