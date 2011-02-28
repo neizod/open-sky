@@ -18,6 +18,7 @@ function initOthersPlot() {
 			k = 36*j + i;
 			lnSymb = "";
 			if(i == 18) lnSymb = "-- " + j/2 + " --"; // higlight celestial equator
+			lnSymb = k; // debug only
 			skyline[k] = new Star(lnSymb, j/2, 90 - 5*i, -10, "#005500");
 		}
 	}

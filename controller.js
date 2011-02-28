@@ -136,7 +136,9 @@ function MouseControl() {
 		this.dxyN = [this.oxy[0], this.oxy[1]];
 	}
 
-	this.click = function() {
+	this.click = function(e) {
+//		if(e.button == 3)
+//			alert(e.button);
 		if(console.forceZoom) return;
 		if(this.dblGoto) this.dblGoto = false;
 	}

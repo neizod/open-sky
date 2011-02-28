@@ -230,7 +230,7 @@ function Star(name, ra, dec, mag, colour) {
 		// =========== show sky section ============
 		xyz = ezGL.rotateY(xyz, console.azimuth);
 		xyz = ezGL.rotateX(xyz, console.altitude);
-		if(xyz[1] + 0.2 < 0) return;
+		if(xyz[1] + 0.3 < 0) return;
 
 		var angle = Math.atan(Math.sqrt(Math.pow(xyz[0], 2) + Math.pow(xyz[2], 2))/Math.abs(xyz[1]));
 		if(xyz[1] < 0) angle = Math.PI - angle;
@@ -265,22 +265,20 @@ function Star(name, ra, dec, mag, colour) {
 				ctx.beginPath();
 				ctx.arc(0, 0, 1, 0, 2*Math.PI);
 				ctx.fill();
-
-/*				var radgrad = ctx.createRadialGradient(0, 0, 0.5, 0, 0, 1);
-				radgrad.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-				radgrad.addColorStop(0.4, "rgba(0, 0, 50, 0.2)");
-				radgrad.addColorStop(1, "rgba(0, 0, 50, 0)");
-
-				ctx.fillStyle = radgrad;
-				ctx.beginPath();
-				ctx.arc(0, 0, 1, 0, 2*Math.PI);
-				ctx.fill();*/
 				break;
 			case 0:
 				ctx.fillStyle = this.colour;
 				ctx.beginPath();
 				ctx.arc(0, 0, 1, 0, 2*Math.PI);
 				ctx.fill();
+
+				var radgrad = ctx.createRadialGradient(0, 0, 0.2, 0, 0, 1);
+				radgrad.addColorStop(0.0, "rgba(255, 255, 255, 0.9)");
+				radgrad.addColorStop(0.9, "rgba(255, 255, 255, 0.1)");
+				radgrad.addColorStop(1.0, "rgba(255, 255, 255, 0.0)");
+
+				ctx.fillStyle = radgrad;
+				ctx.fillRect(-1, -1, 2, 2);
 				break;
 			case 1:
 				ctx.beginPath();
@@ -558,9 +556,27 @@ function Background() {
 		for(var i = 0; i <= polygonNum; i++) {
 			plotGroundSet[i] = this.groundPosition(skyline[groundSet[i]].cartesian);
 		}
-		plotGroundSet[++polygonNum] = [windowSize.halfWidth, windowSize.halfHeight+1];
-		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, windowSize.halfHeight+1];
+		plotGroundSet[++polygonNum] = [windowSize.halfWidth, 0];
+		plotGroundSet[++polygonNum] = [windowSize.halfWidth, windowSize.halfHeight + 1];
+		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, windowSize.halfHeight + 1];
+		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, 0];
 		ezGL.drawPolygon(plotGroundSet, this.groundFill);
+	}
+	this.plotGround2 = function() {
+		var polygonNum = 24;
+		var groundSet = [];
+		for(var i = 0; i <= polygonNum; i++) {
+			groundSet[i] = (2178 + 36*i)%1728;
+		}
+		var plotGroundSet = [];
+		for(var i = 0; i <= polygonNum; i++) {
+			plotGroundSet[i] = this.groundPosition(skyline[groundSet[i]].cartesian);
+		}
+		plotGroundSet[++polygonNum] = [windowSize.halfWidth, 0];
+		plotGroundSet[++polygonNum] = [windowSize.halfWidth, -windowSize.halfHeight - 1];
+		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, -windowSize.halfHeight - 1];
+		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, 0];
+		ezGL.drawPolygon(plotGroundSet, "yellow");
 	}
 	this.groundPosition = function(cartesian) {
 		var xyz = cartesian;
@@ -645,7 +661,7 @@ test = 0 //= true;
 	// ===================== skyyy ===========================
 	if(!stopMoving) {
 		moveIndex = 0;
-		moveIndex = -currentTime();
+//		moveIndex = -currentTime();
 	} else {
 		moveIndex = 180;
 	}
@@ -667,6 +683,9 @@ test = 0 //= true;
 	ctx.restore(); // unclip
 
 	background.plotGround();
+	if( console.altitude != -90 && console.scale < windowSize.getRadius()) {
+		background.plotGround2();
+	}
 	compassSet.plotSky();
 
 
