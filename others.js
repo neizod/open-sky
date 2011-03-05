@@ -23,14 +23,14 @@ function initOthersPlot() {
 		}
 	}
 // ============== Draw Poor Observer Line ========================
-	for(j = 0; j <= 47 ;j++) {
+/*	for(j = 0; j <= 47 ;j++) {
 		for(i = 1; i <= 35; i++) {
 			if(j%2 != 0 && i == 1 || i == 2) continue
 			k = 36*j + i;
 			lnSymb = "^";
 			obsline[k] = new Star(lnSymb, j/2, -90 + 5*i, -10, "#005500");
 		}
-	}
+	}*/
 // ======================= compass ========================
 	compassName = ["S", "SE", "E", "NE", "N", "NW", "W", "SW"]
 	for(i = 0; i < 8; i++) {

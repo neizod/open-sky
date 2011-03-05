@@ -373,11 +373,11 @@ function Console() {
 
 	this.addScale = function(zoom) {
 		if(this.fullMap) return;
-		var maxZoom = 20000;  // !!!!!!!!!!! what's max?????????????????
+		var maxZoom = 50000;
 		this.scale += zoom
-/*		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
+		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
 		else if(this.scale + zoom > maxZoom) this.scale = maxZoom;
-		else this.scale += zoom;*/
+		else this.scale += zoom;
 	}
 	this.forceAddScale = function(zoom) {
 		this.scale += zoom;
@@ -533,20 +533,15 @@ function Background() {
 	this.skyFill = "#050505";//"black";//"gray";
 
 	this.plotBackground = function() {
-		ctx.save();
-		ctx.fillStyle = this.groundFill;
-		ctx.fillRect(-windowSize.halfWidth, -windowSize.halfHeight, windowSize.width, windowSize.height);
-		ctx.restore();
-
-		ctx.beginPath();
-		ctx.arc(0, 0, console.scale, 0, 2*Math.PI);
-		ctx.clip();
-		ctx.clearRect(-windowSize.halfWidth, -windowSize.halfHeight, windowSize.width, windowSize.height);
-
 		ctx.fillStyle = this.skyFill;
 		ctx.fillRect(-windowSize.halfWidth, -windowSize.halfHeight, windowSize.width, windowSize.height);
 	}
 	this.plotGround = function() {
+		this.plotUnderGround();
+		if(console.altitude != -90 && console.scale < windowSize.getRadius())
+			this.plotOverGround();
+	}
+	this.plotUnderGround = function() {
 		var polygonNum = 24;
 		var groundSet = [];
 		for(var i = 0; i <= polygonNum; i++) {
@@ -562,7 +557,7 @@ function Background() {
 		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, 0];
 		ezGL.drawPolygon(plotGroundSet, this.groundFill);
 	}
-	this.plotGround2 = function() {
+	this.plotOverGround = function() {
 		var polygonNum = 24;
 		var groundSet = [];
 		for(var i = 0; i <= polygonNum; i++) {
@@ -576,7 +571,7 @@ function Background() {
 		plotGroundSet[++polygonNum] = [windowSize.halfWidth, -windowSize.halfHeight - 1];
 		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, -windowSize.halfHeight - 1];
 		plotGroundSet[++polygonNum] = [-windowSize.halfWidth, 0];
-		ezGL.drawPolygon(plotGroundSet, "yellow");
+		ezGL.drawPolygon(plotGroundSet, this.groundFill);
 	}
 	this.groundPosition = function(cartesian) {
 		var xyz = cartesian;
@@ -635,10 +630,11 @@ function initPlot() {
 	obslineSet = new PlotSet(skyline, line, "rgba(80, 80, 0, 0.5)", false);
 	compassSet = new PlotSet(compass, line, "black", false);
 //	labelSet = new PlotSet(label, true);
-	starSet.checkEachVisible(6);
+	starSet.checkEachVisible(4);
 	starSet.checkEachNameable(7);
 	starSet.nameable = false;
 
+	skylineSet.visible = false;
 	obslineSet.visible = false;
 }
 
@@ -651,8 +647,9 @@ function drawSky() {
 
 	// ===================== control handler ==================
 	window.addEventListener("keydown", keyboard.keyControl, true);
-//	document.addEventListener("click", mouse.right, false);
-test = 0 //= true;
+	window.onmousewheel = mouse.wheel;
+
+	test = 0 //= true;
 	// ==================== animation handler =================
 	if(mouse.leftDown) mouse.drag();
 	else mouse.releaseHandler();
@@ -673,7 +670,7 @@ test = 0 //= true;
 
 	skylineSet.plotLine();
 	obslineSet.plotLine();
-	skylineSet.plotSky();
+//	skylineSet.plotSky();
 //	obslineSet.plotSky();
 
 	starSet.plotLine();
@@ -683,9 +680,6 @@ test = 0 //= true;
 	ctx.restore(); // unclip
 
 	background.plotGround();
-	if( console.altitude != -90 && console.scale < windowSize.getRadius()) {
-		background.plotGround2();
-	}
 	compassSet.plotSky();
 
 
