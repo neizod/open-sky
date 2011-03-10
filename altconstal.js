@@ -1,6 +1,6 @@
 var altconstal = [];
-for(i = 0; i < 88; i++) {
-	altconstal[i] = [];
+for(var i = 0; i < 88; i++) {
+	altconstal.push([]);
 }
 
 function initAltConstal() {

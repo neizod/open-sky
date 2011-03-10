@@ -1,0 +1,75 @@
+=== g sky map ===
+lat and lon stable!
+
+
+SET_VAR_ZOM = 0 ... 13 (max 19 but no so much img after 13)
+			= 0 ... 12 after +-0
+			= 0 ... 11 after +-75.5
+			= 0 ... 6 after +-82
+			no float point for SET_VAR_ZOM
+
+SET_VAR_ZOM = 5 for 300x400 px orion (4 square)
+aprox myProg.scale == 2000
+
+increasing SET_VAR_ZOM 1 stop will set scale x2
+
+NoItrObj after SET_VAR_ZOM < 10
+
+
+================
+
+
+assign right mouse control
+
+
+user's HUD
+
+
+design unique star name database
+keyboard handler for unique star name
+
+gradient sky
+
+restore user's setting (latitude, longtitude, etc)
+
+
+=============== re check ==============
+star colour for some spectral type
+
+=============== process ===============
+star 50%
+	+ star proper name
+	+ star size
+	+ other's star shape
+	+ star coulor
+
+constallation 90%
+	+ constallation name
+	n constallation boarder
+
+importance skymark
+	+ summer triangle
+	+ winter triangle
+	+ great squre
+	+ noth pole guilder
+	+ south pole guilder
+	+ ecliptic
+	
+sky 70%
+	+ celesticial note
+	+ altazemuth note
+	+ gradient sky
+
+keyboard 40%
+	+ dbl popose on a button
+	+ recheck key
+
+mouse 99%
+	+ design full map calling
+
+ui 0%
+	+ user's hud
+	+ menu
+	+ right click menu
+		+ to wikipedia
+		- to google sky

@@ -40,7 +40,7 @@ function Tool() {
 		windowSize = new WindowSize();
 		ctx.canvas.width = windowSize.width;
 		ctx.canvas.height = windowSize.height;
-		if(console.fullMap) console.forceSetScale(windowSize.getFullBall());
+		if(console.isFull) console.forceSetScale(windowSize.getFullBall());
 		else console.setScale(windowSize.getRadius());
 	}
 }
@@ -81,16 +81,15 @@ function Sky(rotation) {
 
 		var angle = Math.sqrt(Math.pow(xy[0], 2) + Math.pow(xy[1], 2));
 		angle /= console.scale;
-		if(angle > 1) return;
+		if(angle > 1) angle = 1;
 		angle *= Math.PI/2;
 		var posAng = Math.atan(xy[1]/xy[0]);
 		if(isNaN(posAng)) posAng = 0;
-		var sgn = xy[0]/Math.abs(xy[0]);
-		if(isNaN(sgn)) sgn = 1;
+
 		xyz[1] = Math.cos(angle);
-		xyz[0] = sgn*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.cos(posAng);
-		xyz[2] = sgn*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.sin(posAng);
-		
+		xyz[0] = ezGL.sgn(xy[0])*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.cos(posAng);
+		xyz[2] = ezGL.sgn(xy[0])*Math.sqrt(1 - Math.pow(xyz[1], 2))*Math.sin(posAng);
+
 		xyz = ezGL.rotateX(xyz, -console.altitude);
 		xyz = ezGL.rotateY(xyz, -console.azimuth);
 
@@ -143,7 +142,7 @@ function Sky(rotation) {
 		return text;
 	}
 	this.toDegree = function(decimal, type) {
-		if(type) var separator = ["d ", "' ","\""]; // !!!!!!!!!!!! need degree symbol (small o)
+		if(type) var separator = ["\u00B0 ", "' ","\""];
 		else var separator = ["h ", "m ", "s"];
 
 		var minusSign = false
@@ -162,10 +161,12 @@ function Sky(rotation) {
 		abc[2] *= 60
 		abc[2] = Math.floor(abc[2]*10)/10;
 
-		if(!(abc[0] == 0 && abc[1] == 0 && abc[2] == 0) && minusSign) text += "-";
-		// !!!!!!!!!!!!!!!!! seriously, how to compare Each value in array???
-		for(i = 0; i < 3; i++) {
-			text += abc[i] + separator[i];
+		if(!ezGL.compare(abc, 0) && minusSign) text += "-";
+		for(var i = 0; i < 3; i++) {
+			if(i > 0 && abc[i] < 10) text += "0";
+			text += abc[i];
+			if(i == 2 && abc[i] == Math.floor(abc[i])) text += ".0";
+			text += separator[i];
 		}
 		return text;
 	}
@@ -236,11 +237,10 @@ function Star(name, ra, dec, mag, colour) {
 		if(xyz[1] < 0) angle = Math.PI - angle;
 		angle *= 2/Math.PI;
 		var posAng = Math.atan(xyz[2]/xyz[0]);
-		var sgn = xyz[0] / Math.abs(xyz[0]);
-		if(isNaN(sgn)) sgn = 1;
+
 		var xy = [];
-		xy[0] = sgn*angle*Math.cos(posAng);
-		xy[1] = sgn*angle*Math.sin(posAng);
+		xy[0] = ezGL.sgn(xyz[0])*angle*Math.cos(posAng);
+		xy[1] = ezGL.sgn(xyz[0])*angle*Math.sin(posAng);
 		xy = ezGL.scale(xy, console.scale);
 
 		return xy;
@@ -336,9 +336,9 @@ function Console() {
 	this.sw_altitude;
 
 	this.constel = 1;
-	this.fullMap = false;
-	this.forceZoom = false;
-	this.trackStar = false;
+	this.isFull = false;
+	this.isTransit = false;
+//	this.trackStar = false;
 	this.lockUnderFeet = true;
 
 	this.setLatitude = function(latitude) {
@@ -372,7 +372,7 @@ function Console() {
 	}
 
 	this.addScale = function(zoom) {
-		if(this.fullMap) return;
+		if(this.isFull) return;
 		var maxZoom = 50000;
 		this.scale += zoom
 		if(this.scale + zoom < windowSize.getRadius()) this.scale = windowSize.getRadius();
@@ -386,19 +386,21 @@ function Console() {
 		this.azimuth += angle;
 	}
 	this.addAltitude = function(angle) {
-		if(this.fullMap) return;
+		if(this.isFull) return;
 		if(this.altitude + angle < -90) this.altitude = -90;
 		else if(this.altitude + angle > 0) this.altitude = 0;
 		else this.altitude += angle;
 	}
 
 	this.panFactor = function() {
-		var angle = 1.5*windowSize.getRadius()/this.scale;
-		return angle;
+		return 1.5*windowSize.getRadius()/this.scale;
 	}
+	this.zoomFactor = function() {
+		return 0.02*this.scale;
+	}
+	
 	this.changeFullMap = function() {
-		this.fullMap = !this.fullMap;
-		mouse.changeControl();
+		this.isFull = !this.isFull;
 	}
 	this.starTraking = function() {
 		this.trackStar = !this.trackStar;
@@ -583,11 +585,10 @@ function Background() {
 		if(xyz[1] < 0) angle = Math.PI - angle;
 		angle *= 2/Math.PI;
 		var posAng = Math.atan(xyz[2]/xyz[0]);
-		var sgn = xyz[0] / Math.abs(xyz[0]);
-		if(isNaN(sgn)) sgn = 1;
+
 		var xy = [];
-		xy[0] = sgn*angle*Math.cos(posAng);
-		xy[1] = sgn*angle*Math.sin(posAng);
+		xy[0] = ezGL.sgn(xyz[0])*angle*Math.cos(posAng);
+		xy[1] = ezGL.sgn(xyz[0])*angle*Math.sin(posAng);
 		xy = ezGL.scale(xy, console.scale);
 
 		return xy;
@@ -600,6 +601,7 @@ function initUtil() {
 
 	mouse = new MouseControl();
 	keyboard = new KeyboardControl();
+	animation = new Animation();
 }
 function initConsole() {
 	console = new Console();
@@ -652,8 +654,11 @@ function drawSky() {
 	test = 0 //= true;
 	// ==================== animation handler =================
 	if(mouse.leftDown) mouse.drag();
-	else mouse.releaseHandler();
-	if(mouse.dblGoto) mouse.gotoHandler();
+//	else mouse.releaseHandler();
+//	if(mouse.dblGoto) mouse.gotoHandler();
+
+	animation.animate();
+
 
 	// ===================== skyyy ===========================
 	if(!stopMoving) {
@@ -683,6 +688,9 @@ function drawSky() {
 	compassSet.plotSky();
 
 
+
+
+
 	if(true) {// ================ hud ========================
 		ctx.fillText("mouse = " + sky.stringPosition(mouse.oxy), -500, 20);
 		ctx.fillText("origin = " + sky.stringPosition([0, 0]), -500, 40);
@@ -690,18 +698,19 @@ function drawSky() {
 		ctx.fillText("mouse = " + observer.stringPosition(mouse.oxy), -500, 70);
 		ctx.fillText("origin = " + observer.stringPosition([0, 0]), -500, 90);
 
-			ctx.fillText(mouse.gotAltz[0], -550, -50);
-			ctx.fillText(mouse.gotAltz[1], -550, -35);
+			ctx.fillText(mouse.zoomFull, 0, -50); // del
+			ctx.fillText(mouse.gotAltz[0], -550, -50); // del
+			ctx.fillText(mouse.gotAltz[1], -550, -35); // del
 			ctx.fillText(mouse.oxy, -500, -70);
 			ctx.fillText(mouse.cxy, -500, -60);
 			
-//				ctx.fillText(observer.position(mouse.cxy), -400, -50);
-				ctx.fillText(observer.position([0, 0]), -400, -35);
-				ctx.fillText(observer.position([0, 1]), -400, -20);
+//				ctx.fillText( (Math.pow(Math.E, -(mouse.releaseSpeed - mouse.nowSpeed)/2) > 0.0001), -400, -50);
+//				ctx.fillText(mouse.releaseSpeed, -400, -35);
+				ctx.fillText(animation.event, -400, -20);
 			
-//			ctx.fillText(mouse.unclick, 500, -35);
-			ctx.fillText(mouse.leftDown, 500, -20);
-			ctx.fillText(mouse.dblGoto, 500, -5);
+			ctx.fillText(console.isTransit, 500, -35);
+			ctx.fillText(console.isFull, 500, -20);
+			ctx.fillText(mouse.leftDown, 500, -5);
 	}
 	// ======================= dev zone =======================
 	ctx.fillText(console.scale, 0, 0); // use this to check where to debug
