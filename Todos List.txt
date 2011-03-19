@@ -64,8 +64,7 @@ keyboard 40%
 	+ dbl popose on a button
 	+ recheck key
 
-mouse 99%
-	+ design full map calling
+mouse ok
 
 ui 0%
 	+ user's hud

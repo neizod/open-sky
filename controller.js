@@ -110,7 +110,7 @@ function MouseControl() {
 	this.cxy = [];
 	this.dxyO = [];
 	this.dxyN = [];
-	this.obsAltz = [0, 0]; //
+	this.obsAltz = [];
 	this.gotAltz = [0, 0]; // no longer use, still call at sky.js
 	this.speedSet = [0, 0, 0, 0];
 
@@ -161,9 +161,11 @@ function MouseControl() {
 		var gotAltz = [-desAltz[0] + dwnAltz[0], desAltz[1] - cenAltz[1]];
 		gotAltz[0] = ezGL.checkCircleRound(gotAltz[0]);
 
-		var zoomSpeed;
+		var zoomSpeed = 0;
+		var forceZoom = false;
 		if(console.isFull) {
 			zoomSpeed = windowSize.getRadius() - console.scale;
+			forceZoom = true;
 			console.changeFullMap();
 			console.isTransit = true;
 		} else if(console.scale > 10*windowSize.getRadius()) {
@@ -174,12 +176,9 @@ function MouseControl() {
 			zoomSpeed = this.farRadius()*console.scale;
 		} else zoomSpeed = 0;
 
-//		if(!console.isFull) {
-			animation.slow(2.5);
-//		else
-//			animation.event.length = 0;
+		animation.slow(2.5);
 
-		animation.event.push(new AnimateGoto(gotAltz, zoomSpeed));
+		animation.event.push(new AnimateGoto(gotAltz, zoomSpeed, forceZoom));
 	}
 	this.down = function(e) {
 		if(console.isTransit) return;
@@ -205,11 +204,50 @@ function MouseControl() {
 
 		e = e ? e : window.event;
 		var zoom = e.detail ? -e.detail : e.wheelDelta / 40;
+		
+		if(zoom > 0) {
+			if(console.isFull) {
+				if(mouse.zoomFull < 2) {
+					mouse.zoomFull++;
+					animation.event.push(new AnimateReset());
+				} else {
+					mouse.zoomFull = 0;
+					console.isTransit = true;
+					console.changeFullMap();
 
-		if(zoom > 0)
-			animation.event.push(new AnimateGoto([0, 0], 0.28*console.scale));
-		else
-			animation.event.push(new AnimateGoto([0, 0], -0.11*console.scale));
+					animation.event.length = 0;
+					var gotOAltz = console.sw_altitude;
+					var zoomSpeed = windowSize.getRadius() - console.scale;
+					animation.event.push(new AnimateGoto([0, gotOAltz], zoomSpeed, true));
+				}
+			} else if(console.scale == console.mx_scale) {
+				mouse.zoomFull = 0;
+			} else {
+				mouse.zoomFull = 0;
+				animation.event.push(new AnimateGoto([0, 0], 0.28*console.scale, false));
+			}
+		} else {
+			if(console.scale == windowSize.getRadius()) {
+				if(mouse.zoomFull > -2) {
+					mouse.zoomFull--;
+					animation.event.push(new AnimateReset());
+				} else {
+					mouse.zoomFull = 0;
+					console.isTransit = true;
+
+					console.save();
+					animation.event.length = 0;
+					var gotZenith = -console.altitude;
+					var zoomSpeed = windowSize.getFullBall() - console.scale;
+					animation.event.push(new AnimateGoto([0, gotZenith], zoomSpeed, true));
+				}
+			} else if(console.isFull) {
+				mouse.zoomFull = 0;
+			} else {
+				mouse.zoomFull = 0;
+				animation.event.push(new AnimateGoto([0, 0], -0.11*console.scale, false));
+			}
+		}
 	}
 
 	this.drag = function() {
@@ -227,7 +265,7 @@ function MouseControl() {
 			this.obsAltz = [obsAtzN[0] - obsAtzO[0], obsAtzN[1] - obsAtzO[1]];
 			this.obsAltz[0] = ezGL.checkCircleRound(this.obsAltz[0]);
 
-			if(this.dxyO[1] >= this.getZenith()) this.obsAltz[1] = -this.obsAltz[1];
+			if(this.dxyO[1] >= ezGL.getZenith()) this.obsAltz[1] = -this.obsAltz[1];
 			console.addAzimuth(this.obsAltz[0]);
 			console.addAltitude(this.obsAltz[1]);
 		} else {
@@ -239,11 +277,11 @@ function MouseControl() {
 	this.release = function() {
 		if(!this.leftDown) return;
 		this.leftDown = false;
+		animation.event.push(new AnimateRelease(this.obsAltz, this.releaseSpeed));
+
 		this.dxyO = [];
 		this.dxyN = [];
 		this.speedSet = [0, 0, 0, 0];
-
-		animation.event.push(new AnimateRelease(this.obsAltz, this.releaseSpeed));
 	}
 
 	this.farRadius = function() {
@@ -253,16 +291,6 @@ function MouseControl() {
 		else farFactor = 0;
 		return farFactor;
 	}
-	this.getZenith = function() {
-		xyz = compassSet.plotSet[8].cartesian;
-		xyz = ezGL.switchCoordinateSystem(xyz);
-		xyz = ezGL.rotateX(xyz, 90);
-
-		xyz = ezGL.scale(xyz, console.scale);
-		xyz = ezGL.rotateY(xyz, console.azimuth);
-		xyz = ezGL.rotateX(xyz, console.altitude);
-		return xyz[2];
-	}
 	this.speedHandler = function(dragSpeed) {
 		this.speedSet.shift();
 		this.speedSet.push(dragSpeed);
@@ -271,6 +299,20 @@ function MouseControl() {
 		for(var i = 0; i < 4; i++) {
 			this.releaseSpeed = (this.speedSet[i] > this.releaseSpeed) ? this.speedSet[i] : this.releaseSpeed;
 		}
+	}
+}
+
+function Information() {
+	this.focusObj = [];
+
+	this.add = function(obj) {
+		if(this.focusObj.length > 0 && this.focusObj[0].mag > obj.mag)
+			this.focusObj.splice(0, 0, obj);
+		else
+			this.focusObj.push(obj);
+	}
+	this.clear = function() {
+		this.focusObj.length = 0;
 	}
 }
 
@@ -292,9 +334,28 @@ function Animation() {
 	}
 }
 
-function AnimateGoto(gotAltz, zoomSpeed) {
+function AnimateReset() {
+	this.turnLeft = 15;
+	this.turnAll = 15;
+
+	this.animate = function() {
+		if(this.turnLeft > 0) {
+			this.turnLeft--;
+		} else {
+			mouse.zoomFull = 0;
+			this.turnLeft--;
+		}
+	}
+	this.slow = function(slowFactor) {
+		mouse.zoomFull = 0;
+		this.turnLeft = -1;
+	}
+}
+
+function AnimateGoto(gotAltz, zoomSpeed, forceZoom) {
 	this.gotAltz = gotAltz;
 	this.zoomSpeed = zoomSpeed;
+	this.forceZoom = forceZoom;
 
 	this.turnLeft = 20;
 	this.turnAll = 20;
@@ -307,7 +368,7 @@ function AnimateGoto(gotAltz, zoomSpeed) {
 		var speedFunction = Math.pow(Math.sin(Math.PI*this.turnLeft/this.turnAll), 2)*this.deriviate;
 
 		if(this.turnLeft > 0) {
-			if(console.isTransit)
+			if(this.forceZoom)
 				console.forceAddScale(speedFunction*this.zoomSpeed);
 			else
 				console.addScale(speedFunction*this.zoomSpeed);
@@ -315,6 +376,8 @@ function AnimateGoto(gotAltz, zoomSpeed) {
 			console.addAltitude(speedFunction*this.gotAltz[1]);
 			this.turnLeft--;
 		} else {
+			if(Math.floor(console.scale) <= windowSize.getFullBall() && console.isTransit)
+				console.changeFullMap();
 			if(console.isTransit)
 				console.isTransit = false;
 			this.turnLeft--;

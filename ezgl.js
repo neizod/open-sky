@@ -19,6 +19,26 @@ function EzGL() {
 			checkValue += 360;
 		return checkValue;
 	}
+	this.getZenith = function() {
+		xyz = compassSet.plotSet[8].cartesian;
+		xyz = this.switchCoordinateSystem(xyz);
+		xyz = this.rotateX(xyz, 90);
+
+		xyz = this.rotateY(xyz, console.azimuth);
+		xyz = this.rotateX(xyz, console.altitude);
+
+		var angle = Math.atan(Math.sqrt(Math.pow(xyz[0], 2) + Math.pow(xyz[2], 2))/Math.abs(xyz[1]));
+		if(xyz[1] < 0) angle = Math.PI - angle;
+		angle *= 2/Math.PI;
+		var posAng = Math.atan(xyz[2]/xyz[0]);
+
+		var xy = [];
+		xy[0] = this.sgn(xyz[0])*angle*Math.cos(posAng);
+		xy[1] = this.sgn(xyz[0])*angle*Math.sin(posAng);
+
+		xy = this.scale(xy, console.scale);
+		return xy[1];
+	}
 
 	this.scale = function(xyz, scaling) {
 		return [scaling*xyz[0], scaling*xyz[1], scaling*xyz[2]];
