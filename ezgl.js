@@ -24,8 +24,8 @@ function EzGL() {
         xyz = this.switchCoordinateSystem(xyz);
         xyz = this.rotateX(xyz, 90);
 
-        xyz = this.rotateY(xyz, console.azimuth);
-        xyz = this.rotateX(xyz, console.altitude);
+        xyz = this.rotateY(xyz, skyConsole.azimuth);
+        xyz = this.rotateX(xyz, skyConsole.altitude);
 
         var angle = Math.atan(Math.sqrt(Math.pow(xyz[0], 2) + Math.pow(xyz[2], 2))/Math.abs(xyz[1]));
         if(xyz[1] < 0) angle = Math.PI - angle;
@@ -36,7 +36,7 @@ function EzGL() {
         xy[0] = this.sgn(xyz[0])*angle*Math.cos(posAng);
         xy[1] = this.sgn(xyz[0])*angle*Math.sin(posAng);
 
-        xy = this.scale(xy, console.scale);
+        xy = this.scale(xy, skyConsole.scale);
         return xy[1];
     }
 
