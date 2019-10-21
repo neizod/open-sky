@@ -6,29 +6,29 @@ function KeyboardControl() {
         switch(this.key) {
             // ================ navigation section ==================
             case 37: // left arrow
-                console.addAzimuth(console.panFactor());
+                skyConsole.addAzimuth(skyConsole.panFactor());
                 break;
             case 38: // up arrow
-                console.addAltitude(console.panFactor());
+                skyConsole.addAltitude(skyConsole.panFactor());
                 break;
             case 39: // right arrow
-                console.addAzimuth(-console.panFactor());
+                skyConsole.addAzimuth(-skyConsole.panFactor());
                 break;
             case 40: // down arrow
-                console.addAltitude(-console.panFactor());
+                skyConsole.addAltitude(-skyConsole.panFactor());
                 break;
             case 88: // x -- zoom in
-                console.addScale(console.zoomFactor());
+                skyConsole.addScale(skyConsole.zoomFactor());
                 break;
             case 90: // z -- zoom out
-                console.addScale(-console.zoomFactor());
+                skyConsole.addScale(-skyConsole.zoomFactor());
                 break;
                 // ================= sky setting section ================
             case 83: // s -- stop sky
                 stopMoving = !stopMoving;
                 break;
             case 67: // c -- constellation
-                switch(console.constel) {
+                switch(skyConsole.constel) {
                     case 0:
                         starSet.changeLine(constal);
                         break;
@@ -38,7 +38,7 @@ function KeyboardControl() {
                     default:
                         starSet.changeLine([]);
                 }
-                console.changeConstel()
+                skyConsole.changeConstel()
                     break;
             case 76: // l -- show sky line
                 if(!skylineSet.visible && !obslineSet.visible)
@@ -60,15 +60,15 @@ function KeyboardControl() {
                 starSet.changeEachShape();
                 break;
             case 85: // u -- show map under feet & unlock rotate under feet
-                console.changeLockUnderFeet();
+                skyConsole.changeLockUnderFeet();
                 break;
             case 70: // f -- show full map
-                if(console.isTransit) return;
-                if(!console.isFull) {
-                    console.save();
-                    console.forceSetScale(windowSize.getFullBall());
-                } else console.restore();
-                console.changeFullMap();
+                if(skyConsole.isTransit) return;
+                if(!skyConsole.isFull) {
+                    skyConsole.save();
+                    skyConsole.forceSetScale(windowSize.getFullBall());
+                } else skyConsole.restore();
+                skyConsole.changeFullMap();
                 break;
             case 81: // q -- optimize performance
                 tool.performance(true);
@@ -133,10 +133,10 @@ function MouseControl() {
     }
 
     this.click = function() {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
     }
     this.right = function() {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         // ---- just one of menu -----
         var url = "http://www.google.com/sky/";
@@ -150,7 +150,7 @@ function MouseControl() {
         // ---------------------------
     }
     this.dblclick = function() {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         this.clickingPosition();
 
@@ -163,17 +163,17 @@ function MouseControl() {
 
         var zoomSpeed = 0;
         var forceZoom = false;
-        if(console.isFull) {
-            zoomSpeed = windowSize.getRadius() - console.scale;
+        if(skyConsole.isFull) {
+            zoomSpeed = windowSize.getRadius() - skyConsole.scale;
             forceZoom = true;
-            console.changeFullMap();
-            console.isTransit = true;
-        } else if(console.scale > 10*windowSize.getRadius()) {
-            zoomSpeed = windowSize.getRadius() - console.scale;
+            skyConsole.changeFullMap();
+            skyConsole.isTransit = true;
+        } else if(skyConsole.scale > 10*windowSize.getRadius()) {
+            zoomSpeed = windowSize.getRadius() - skyConsole.scale;
             zoomSpeed = zoomSpeed/2 - 1;
             gotAltz = [0, 0];
         } else if(this.farRadius() > 0) {
-            zoomSpeed = this.farRadius()*console.scale;
+            zoomSpeed = this.farRadius()*skyConsole.scale;
         } else zoomSpeed = 0;
 
         animation.slow(2.5);
@@ -181,13 +181,13 @@ function MouseControl() {
         animation.event.push(new AnimateGoto(gotAltz, zoomSpeed, forceZoom));
     }
     this.down = function(e) {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         if(e.which == 1)
             this.drag();
     }
     this.up = function(e) {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         if(e.which == 1)
             this.release();
@@ -195,57 +195,57 @@ function MouseControl() {
             this.right();
     }
     this.out = function() {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         if(this.leftDown) this.release();
     }
     this.wheel = function(e) {
-        if(console.isTransit) return;
+        if(skyConsole.isTransit) return;
 
         e = e ? e : window.event;
         var zoom = e.detail ? -e.detail : e.wheelDelta / 40;
 
         if(zoom > 0) {
-            if(console.isFull) {
+            if(skyConsole.isFull) {
                 if(mouse.zoomFull < 2) {
                     mouse.zoomFull++;
                     animation.event.push(new AnimateReset());
                 } else {
                     mouse.zoomFull = 0;
-                    console.isTransit = true;
-                    console.changeFullMap();
+                    skyConsole.isTransit = true;
+                    skyConsole.changeFullMap();
 
                     animation.event.length = 0;
-                    var gotOAltz = console.sw_altitude;
-                    var zoomSpeed = windowSize.getRadius() - console.scale;
+                    var gotOAltz = skyConsole.sw_altitude;
+                    var zoomSpeed = windowSize.getRadius() - skyConsole.scale;
                     animation.event.push(new AnimateGoto([0, gotOAltz], zoomSpeed, true));
                 }
-            } else if(console.scale == console.mx_scale) {
+            } else if(skyConsole.scale == skyConsole.mx_scale) {
                 mouse.zoomFull = 0;
             } else {
                 mouse.zoomFull = 0;
-                animation.event.push(new AnimateGoto([0, 0], 0.28*console.scale, false));
+                animation.event.push(new AnimateGoto([0, 0], 0.28*skyConsole.scale, false));
             }
         } else {
-            if(console.scale == windowSize.getRadius()) {
+            if(skyConsole.scale == windowSize.getRadius()) {
                 if(mouse.zoomFull > -2) {
                     mouse.zoomFull--;
                     animation.event.push(new AnimateReset());
                 } else {
                     mouse.zoomFull = 0;
-                    console.isTransit = true;
+                    skyConsole.isTransit = true;
 
-                    console.save();
+                    skyConsole.save();
                     animation.event.length = 0;
-                    var gotZenith = -console.altitude;
-                    var zoomSpeed = windowSize.getFullBall() - console.scale;
+                    var gotZenith = -skyConsole.altitude;
+                    var zoomSpeed = windowSize.getFullBall() - skyConsole.scale;
                     animation.event.push(new AnimateGoto([0, gotZenith], zoomSpeed, true));
                 }
-            } else if(console.isFull) {
+            } else if(skyConsole.isFull) {
                 mouse.zoomFull = 0;
             } else {
                 mouse.zoomFull = 0;
-                animation.event.push(new AnimateGoto([0, 0], -0.11*console.scale, false));
+                animation.event.push(new AnimateGoto([0, 0], -0.11*skyConsole.scale, false));
             }
         }
     }
@@ -266,8 +266,8 @@ function MouseControl() {
             this.obsAltz[0] = ezGL.checkCircleRound(this.obsAltz[0]);
 
             if(this.dxyO[1] >= ezGL.getZenith()) this.obsAltz[1] = -this.obsAltz[1];
-            console.addAzimuth(this.obsAltz[0]);
-            console.addAltitude(this.obsAltz[1]);
+            skyConsole.addAzimuth(this.obsAltz[0]);
+            skyConsole.addAltitude(this.obsAltz[1]);
         } else {
             this.speedHandler(0);
             this.obsAltz = [0, 0];
@@ -369,17 +369,17 @@ function AnimateGoto(gotAltz, zoomSpeed, forceZoom) {
 
         if(this.turnLeft > 0) {
             if(this.forceZoom)
-                console.forceAddScale(speedFunction*this.zoomSpeed);
+                skyConsole.forceAddScale(speedFunction*this.zoomSpeed);
             else
-                console.addScale(speedFunction*this.zoomSpeed);
-            console.addAzimuth(speedFunction*this.gotAltz[0]);
-            console.addAltitude(speedFunction*this.gotAltz[1]);
+                skyConsole.addScale(speedFunction*this.zoomSpeed);
+            skyConsole.addAzimuth(speedFunction*this.gotAltz[0]);
+            skyConsole.addAltitude(speedFunction*this.gotAltz[1]);
             this.turnLeft--;
         } else {
-            if(Math.floor(console.scale) <= windowSize.getFullBall() && console.isTransit)
-                console.changeFullMap();
-            if(console.isTransit)
-                console.isTransit = false;
+            if(Math.floor(skyConsole.scale) <= windowSize.getFullBall() && skyConsole.isTransit)
+                skyConsole.changeFullMap();
+            if(skyConsole.isTransit)
+                skyConsole.isTransit = false;
             this.turnLeft--;
         }
     }
@@ -399,8 +399,8 @@ function AnimateRelease(obsAltz, releaseSpeed) {
         var speedFunction = Math.pow(Math.E, -(this.turnAll - this.turnLeft)/2)*this.deriviate;
 
         if(speedFunction > 0.0001) {
-            console.addAzimuth(speedFunction*this.obsAltz[0]);
-            console.addAltitude(speedFunction*this.obsAltz[1]);
+            skyConsole.addAzimuth(speedFunction*this.obsAltz[0]);
+            skyConsole.addAltitude(speedFunction*this.obsAltz[1]);
             this.turnLeft--;
         } else this.turnLeft = -1;
     }
