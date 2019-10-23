@@ -96,61 +96,10 @@ function KeyboardControl() {
                 starSet.checkEachVisible(7);
                 break;
         }
-        console.changeConstel()
-        break
-      case 76: // l -- show sky line
-        if (!skylineSet.visible && !obslineSet.visible) { skylineSet.changeVisible() } else if (skylineSet.visible && !obslineSet.visible) { obslineSet.changeVisible() } else if (skylineSet.visible && obslineSet.visible) { skylineSet.changeVisible() } else obslineSet.changeVisible()
-        break
-      //          case 71: // g -- show grid line
-      //              obslineSet.changeVisible();
-      //              break;
-      case 78: // n -- show name
-        starSet.changeNameable()
-        break
-      case 84: // t -- change star shape
-        starSet.changeEachShape()
-        break
-      case 85: // u -- show map under feet & unlock rotate under feet
-        console.changeLockUnderFeet()
-        break
-      case 70: // f -- show full map
-        if (console.isTransit) return
-        if (!console.isFull) {
-          console.save()
-          console.forceSetScale(windowSize.getFullBall())
-        } else console.restore()
-        console.changeFullMap()
-        break
-      case 81: // q -- optimize performance
-        tool.performance(true)
-        break
-      // ============================ magnitude setting ===========================
-      case 49: // 1 -- magnitude 1
-        starSet.checkEachVisible(1)
-        break
-      case 50:
-        starSet.checkEachVisible(2)
-        break
-      case 51:
-        starSet.checkEachVisible(3)
-        break
-      case 52:
-        starSet.checkEachVisible(4)
-        break
-      case 53:
-        starSet.checkEachVisible(5)
-        break
-      case 54:
-        starSet.checkEachVisible(6)
-        break
-      case 55:
-        starSet.checkEachVisible(7)
-        break
     }
-  }
-  this.changeControl = function () {
-    this.control = !this.control
-  }
+    this.changeControl = function() {
+        this.control = !this.control;
+    }
 }
 
 function MouseControl() {
@@ -320,134 +269,87 @@ function MouseControl() {
             skyConsole.addAzimuth(this.obsAltz[0]);
             skyConsole.addAltitude(this.obsAltz[1]);
         } else {
-          mouse.zoomFull = 0
-          console.isTransit = true
-
-          console.save()
-          animation.event.length = 0
-          var gotZenith = -console.altitude
-          var zoomSpeed = windowSize.getFullBall() - console.scale
-          animation.event.push(
-            new AnimateGoto([0, gotZenith], zoomSpeed, true)
-          )
+            this.speedHandler(0);
+            this.obsAltz = [0, 0];
         }
-      } else if (console.isFull) {
-        mouse.zoomFull = 0
-      } else {
-        mouse.zoomFull = 0
-        animation.event.push(
-          new AnimateGoto([0, 0], -0.11 * console.scale, false)
-        )
-      }
+        this.leftDown = true;
     }
-  }
+    this.release = function() {
+        if(!this.leftDown) return;
+        this.leftDown = false;
+        animation.event.push(new AnimateRelease(this.obsAltz, this.releaseSpeed));
 
-  this.drag = function () {
-    animation.slow(1.4)
-
-    this.dragingPosition()
-    if (this.leftDown) {
-      var dragVector = [
-        this.dxyN[0] - this.dxyO[0],
-        this.dxyN[1] - this.dxyO[1]
-      ]
-      var dragSpeed = Math.sqrt(
-        Math.pow(dragVector[0], 2) + Math.pow(dragVector[1], 2)
-      )
-      this.speedHandler(dragSpeed)
-
-      var obsAtzO = observer.position(this.dxyO)
-      var obsAtzN = observer.position(this.dxyN)
-
-      this.obsAltz = [obsAtzN[0] - obsAtzO[0], obsAtzN[1] - obsAtzO[1]]
-      this.obsAltz[0] = ezGL.checkCircleRound(this.obsAltz[0])
-
-      if (this.dxyO[1] >= ezGL.getZenith()) this.obsAltz[1] = -this.obsAltz[1]
-      console.addAzimuth(this.obsAltz[0])
-      console.addAltitude(this.obsAltz[1])
-    } else {
-      this.speedHandler(0)
-      this.obsAltz = [0, 0]
+        this.dxyO = [];
+        this.dxyN = [];
+        this.speedSet = [0, 0, 0, 0];
     }
-    this.leftDown = true
-  }
-  this.release = function () {
-    if (!this.leftDown) return
-    this.leftDown = false
-    animation.event.push(new AnimateRelease(this.obsAltz, this.releaseSpeed))
 
-    this.dxyO = []
-    this.dxyN = []
-    this.speedSet = [0, 0, 0, 0]
-  }
-
-  this.farRadius = function () {
-    toMouse = Math.sqrt(Math.pow(this.oxy[0], 2) + Math.pow(this.oxy[1], 2))
-    if (toMouse < windowSize.getRadius() / 2) {
-      farFactor = Math.pow(
-        Math.cos((toMouse * Math.PI) / windowSize.getRadius()),
-        2
-      )
-    } else farFactor = 0
-    return farFactor
-  }
-  this.speedHandler = function (dragSpeed) {
-    this.speedSet.shift()
-    this.speedSet.push(dragSpeed)
-
-    this.releaseSpeed = 0
-    for (var i = 0; i < 4; i++) {
-      this.releaseSpeed =
-        this.speedSet[i] > this.releaseSpeed
-          ? this.speedSet[i]
-          : this.releaseSpeed
+    this.farRadius = function() {
+        toMouse = Math.sqrt(Math.pow(this.oxy[0], 2) + Math.pow(this.oxy[1], 2));
+        if(toMouse < windowSize.getRadius()/2)
+            farFactor = Math.pow(Math.cos(toMouse*Math.PI/windowSize.getRadius()), 2);
+        else farFactor = 0;
+        return farFactor;
     }
-  }
+    this.speedHandler = function(dragSpeed) {
+        this.speedSet.shift();
+        this.speedSet.push(dragSpeed);
+
+        this.releaseSpeed = 0;
+        for(var i = 0; i < 4; i++) {
+            this.releaseSpeed = (this.speedSet[i] > this.releaseSpeed) ? this.speedSet[i] : this.releaseSpeed;
+        }
+    }
 }
 
-function Information () {
-  this.focusObj = []
+function Information() {
+    this.focusObj = [];
 
-  this.add = function (obj) {
-    if (this.focusObj.length > 0 && this.focusObj[0].mag > obj.mag) { this.focusObj.splice(0, 0, obj) } else this.focusObj.push(obj)
-  }
-  this.clear = function () {
-    this.focusObj.length = 0
-  }
+    this.add = function(obj) {
+        if(this.focusObj.length > 0 && this.focusObj[0].mag > obj.mag)
+            this.focusObj.splice(0, 0, obj);
+        else
+            this.focusObj.push(obj);
+    }
+    this.clear = function() {
+        this.focusObj.length = 0;
+    }
 }
 
-function Animation () {
-  this.event = []
+function Animation() {
+    this.event = [];
 
-  this.animate = function () {
-    for (var i = this.event.length - 1; i >= 0; i--) {
-      if (this.event[i].turnLeft >= 0) this.event[i].animate()
-      else this.event.splice(i, 1)
+    this.animate = function() {
+        for(var i = this.event.length - 1; i >= 0; i--) {
+            if(this.event[i].turnLeft >= 0)
+                this.event[i].animate();
+            else
+                this.event.splice(i, 1);
+        }
     }
-  }
-  this.slow = function (slowFactor) {
-    for (var i = 0; i < this.event.length; i++) {
-      this.event[i].slow(slowFactor)
+    this.slow = function(slowFactor) {
+        for(var i = 0; i < this.event.length; i++) {
+            this.event[i].slow(slowFactor);
+        }
     }
-  }
 }
 
-function AnimateReset () {
-  this.turnLeft = 15
-  this.turnAll = 15
+function AnimateReset() {
+    this.turnLeft = 15;
+    this.turnAll = 15;
 
-  this.animate = function () {
-    if (this.turnLeft > 0) {
-      this.turnLeft--
-    } else {
-      mouse.zoomFull = 0
-      this.turnLeft--
+    this.animate = function() {
+        if(this.turnLeft > 0) {
+            this.turnLeft--;
+        } else {
+            mouse.zoomFull = 0;
+            this.turnLeft--;
+        }
     }
-  }
-  this.slow = function (slowFactor) {
-    mouse.zoomFull = 0
-    this.turnLeft = -1
-  }
+    this.slow = function(slowFactor) {
+        mouse.zoomFull = 0;
+        this.turnLeft = -1;
+    }
 }
 
 function AnimateGoto(gotAltz, zoomSpeed, forceZoom) {
@@ -484,10 +386,6 @@ function AnimateGoto(gotAltz, zoomSpeed, forceZoom) {
     this.slow = function(slowFactor) {
         this.deriviate /= slowFactor;
     }
-  }
-  this.slow = function (slowFactor) {
-    this.deriviate /= slowFactor
-  }
 }
 
 function AnimateRelease(obsAltz, releaseSpeed) {

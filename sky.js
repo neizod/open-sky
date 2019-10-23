@@ -162,8 +162,8 @@ function SkyConsole() {
     }
 }
 
-function Sky (rotation) {
-  this.rotation = rotation
+function Sky(rotation) {
+    this.rotation = rotation;
 
     this.position = function (xy) {
         var radec = [];
@@ -191,8 +191,8 @@ function Sky (rotation) {
         }
         var ref = ezGL.rotateZ(xyz, 90); // create ref point at 90 degree ahead
 
-    xyz = ezGL.switchCoordinateSystem(xyz)
-    ref = ezGL.switchCoordinateSystem(ref)
+        xyz = ezGL.switchCoordinateSystem(xyz);
+        ref = ezGL.switchCoordinateSystem(ref);
 
         var rDec = Math.asin(xyz[2]);
         if (xyz[0] / Math.cos(rDec) <= 1)
@@ -260,51 +260,6 @@ function Sky (rotation) {
         }
         return text;
     }
-    return radec
-  }
-  this.stringPosition = function (xy) {
-    if (!this.position(xy)) return
-    radec = this.position(xy)
-    if (this.rotation) {
-      // ra dec
-      var text = 'RA ' + this.toDegree(radec[0], false)
-      text += ',   Dec ' + this.toDegree(radec[1], true)
-    } else {
-      // atz, att
-      var text = this.toDegree(radec[0], true)
-      text += ',   ' + this.toDegree(radec[1], true)
-    }
-    return text
-  }
-  this.toDegree = function (decimal, type) {
-    if (type) var separator = ['\u00B0 ', "' ", '"']
-    else var separator = ['h ', 'm ', 's']
-
-    var minusSign = false
-    var text = ''
-    if (decimal < 0) {
-      decimal = -decimal
-      minusSign = true
-    }
-    var abc = []
-    abc[0] = Math.floor(decimal)
-    abc[1] = decimal - abc[0]
-    abc[1] *= 60
-    abc[2] = abc[1]
-    abc[1] = Math.floor(abc[1])
-    abc[2] = abc[2] - abc[1]
-    abc[2] *= 60
-    abc[2] = Math.floor(abc[2] * 10) / 10
-
-    if (!ezGL.compare(abc, 0) && minusSign) text += '-'
-    for (var i = 0; i < 3; i++) {
-      if (i > 0 && abc[i] < 10) text += '0'
-      text += abc[i]
-      if (i === 2 && abc[i] === Math.floor(abc[i])) text += '.0'
-      text += separator[i]
-    }
-    return text
-  }
 }
 function Background() {
     this.groundFill = "rgba(3, 0, 10, 1)";//"rgba(15, 0, 5, 1)"; // change last value for alpha
@@ -555,7 +510,6 @@ function Line(id, nbh) {
             this.connected[i] = false;
         }
     }
-  }
 }
 function PlotSet(plotSet, lineSet, colour, rotation) {
     this.plotSet = plotSet;
@@ -647,15 +601,15 @@ function PlotSet(plotSet, lineSet, colour, rotation) {
 }
 
 // +++++++++++++++++ chang parameters here to see what's going on +++++++++++++++++++
-function initUtil () {
-  tool = new Tool()
-  ezGL = new EzGL()
+function initUtil() {
+    tool = new Tool();
+    ezGL = new EzGL();
 
-  mouse = new MouseControl()
-  keyboard = new KeyboardControl()
-  animation = new Animation()
+    mouse = new MouseControl();
+    keyboard = new KeyboardControl();
+    animation = new Animation();
 
-  info = new Information()
+    info = new Information();
 }
 function initConsole() {
     skyConsole = new SkyConsole();
