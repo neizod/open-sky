@@ -6,8 +6,8 @@
   "author": "osmarpetry <osmarpetry@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint -c .eslintrc.json '**/*.js'",
-    "lint:fix": "eslint --fix '**/*.js'",
+    "lint": "eslint -c .eslintrc.json \"./**/*.js\"",
+    "lint:fix": "eslint -c .eslintrc.json --fix \"./**/*.js\"",
     "prettier": "prettier --write \"./**/*.js\""
   },
   "devDependencies": {
