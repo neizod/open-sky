@@ -1,0 +1,22 @@
+{
+  "name": "open-sky",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:osmarpetry/open-sky.git",
+  "author": "osmarpetry <osmarpetry@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint -c .eslintrc.json \"./**/*.js\"",
+    "lint:fix": "eslint -c .eslintrc.json --fix \"./**/*.js\"",
+    "prettier": "prettier --write \"./**/*.js\""
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "prettier": "1.18.2"
+  }
+}
