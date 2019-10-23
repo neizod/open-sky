@@ -516,7 +516,7 @@ function PlotSet (plotSet, lineSet, colour, rotation) {
   this.plotSky = function () {
     if (!this.visible) return
     for (i = 0; i < this.plotSet.length; i++) {
-      if (this.plotSet[i] === null) continue
+      if (this.plotSet[i] === undefined) continue
       this.plotSet[i].plotSky(this.rotation)
       if (this.nameable) { this.plotSet[i].plotName() }
       if (this.focusable && this.plotSet[i].mouseOn) { info.add(this.plotSet[i]) }
@@ -571,19 +571,19 @@ function PlotSet (plotSet, lineSet, colour, rotation) {
   }
   this.checkEachVisible = function (min_mag) {
     for (i = 0; i < this.plotSet.length; i++) {
-      if (this.plotSet[i] === null) continue
+      if (this.plotSet[i] === undefined) continue
       this.plotSet[i].checkVisible(min_mag)
     }
   }
   this.checkEachNameable = function (min_mag) {
     for (i = 0; i < this.plotSet.length; i++) {
-      if (this.plotSet[i] === null) continue
+      if (this.plotSet[i] === undefined) continue
       this.plotSet[i].checkSignificant(min_mag)
     }
   }
   this.changeEachShape = function () {
     for (i = 0; i < this.plotSet.length; i++) {
-      if (this.plotSet[i] === null) continue
+      if (this.plotSet[i] === undefined) continue
       this.plotSet[i].shape++
       this.plotSet[i].shape %= 3
     }
